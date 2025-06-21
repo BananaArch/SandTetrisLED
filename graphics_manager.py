@@ -51,6 +51,8 @@ class GraphicsManager:
     def update_box_display(self):
         if self.box_tilegrid.y < constants.GAME_HEIGHT - 3:
             self.box_tilegrid.y = self.box_tilegrid.y + 1
+        else:
+            self.box_tilegrid.y=0
 
         print(self.box_tilegrid.y)
 
