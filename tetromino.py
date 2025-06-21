@@ -3,14 +3,14 @@
 class Tetromino:
     """ This class is a model class that represents the active, falling Tetromino. """
 
-    def __init__(self, start_x = 0, start_y = 0, shape, rotation=0):
+    def __init__(self, shape, start_x = 0, start_y = 0, rotation=0):
         """
         Initializes a new Tetromino
 
         Args:
+            shape (idk yet): The shape of the tetromino.py
             start_x (int): The starting x coordinate. Default: 0
             start_y (int): The starting y coordinate. Default: 0
-            shape (idk yet): The shape of the tetromino.py
             rotation (int): Its rotation value. Default: 0
         """
 

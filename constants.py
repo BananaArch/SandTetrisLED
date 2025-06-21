@@ -6,7 +6,7 @@ GAME_WIDTH = 32
 GAME_HEIGHT = 64
 
 # -- Timing --
-GAME_LOOP_DELAY = 0.01  # A small delay in the main loop
+GAME_LOOP_DELAY = 0.1  # A small delay in the main loop
 INITIAL_FALL_RATE = 1.0   # Time in seconds for a piece to fall one step
 
 # -- Colors --

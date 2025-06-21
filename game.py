@@ -1,5 +1,13 @@
 # game.py
 
+from graphics_manager import GraphicsManager
+from tetromino import Tetromino
+from sand_pile import SandPile
+import constants
+
+import time
+
+
 class Game:
     """
     This class is a controller. It initializes the game and runs the main game loop.
@@ -9,11 +17,15 @@ class Game:
     def __init__(self):
         """
         Creates the Game object.
-        This constructor then creates a Graphics Manager, SandPile, and the Active Tetromino.
+        This constructor then creates a
+            Graphics Manager,
+            SandPile,
+            and the Active Tetromino.
         """
-        pass
+        self.graphics_manager = GraphicsManager()
 
-    def start_game_loop():
+    def start_game_loop(self):
         """ This is the actual game loop which causes the game to happen. """
         while True:
-            pass
+            self.graphics_manager.update_display()
+            time.sleep(constants.GAME_LOOP_DELAY)
