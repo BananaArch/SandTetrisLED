@@ -33,12 +33,12 @@ class SandPileView:
         self.sand_palette = sprite_sheet_palette
 
         self.sand_state_bitmap = displayio.Bitmap(
-            width = constants.GAME_WIDTH,
-            height = constants.PLAYFIELD_HEIGHT,
-            value_count = len(self.sand_palette),
+            constants.GAME_WIDTH,  # width
+            constants.PLAYFIELD_HEIGHT,  # height
+            len(self.sand_palette),  # value_count
         )
 
-        self.sand_tile_grid = displayio.TileGrid(
+        self._sand_tile_grid = displayio.TileGrid(
             bitmap=self.sand_state_bitmap,
             pixel_shader=self.sand_palette,
             width=1, # The grid is only 1 tile wide
@@ -47,7 +47,7 @@ class SandPileView:
             tile_height=constants.PLAYFIELD_HEIGHT,
         )
 
-        root_group.append(self.sand_tile_grid)
+        root_group.append(self._sand_tile_grid)
         # No dedicated sand_group needed, as the sand_tilegrid is a single visual object that never moves.
 
     def update(self):
@@ -58,4 +58,5 @@ class SandPileView:
         Args:
 
         """
+
         pass

@@ -59,8 +59,6 @@ class GraphicsManager:
         """
         self._display.auto_refresh = True
 
-
-
     def create_infobar_group(self):
         """ helper class for constructor to create infobar layout. """
         pass

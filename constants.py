@@ -11,8 +11,14 @@ INFO_BAR_HEIGHT = 5
 PLAYFIELD_HEIGHT = GAME_HEIGHT - INFO_BAR_HEIGHT
 
 # --- Timing ---
-GAME_LOOP_DELAY = 0.1  # A small delay in the main loop
-INITIAL_FALL_RATE = 1.0   # Time in seconds for a piece to fall one step
+TPS = 20  # The amount of ticks that run in a single second
+# If the TPS is too fast, the controller will not respect it and run as
+# fast as it can.
+TICK_RATE = 1.0 / TPS
+
+# --- Tetromino Physics ---
+INITIAL_FALL_RATE = 0.05  # the seconds it takes for the tetromino to fall 1 px.
+FALL_RATE_DECREMENTATION_FACTOR = 0.75  # The fall rate gets 90% debuff
 
 # --- Tetromino Dimensions ---
 

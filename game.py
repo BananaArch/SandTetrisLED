@@ -2,6 +2,7 @@
 
 from graphics_manager import GraphicsManager
 from tetromino_view import TetrominoView
+from sand_pile_view import SandPileView
 from tetromino import Tetromino
 from sand_pile import SandPile
 import constants
@@ -24,37 +25,60 @@ class Game:
             and the Active Tetromino.
         """
 
-        # Create our view classes/objects
+        # --- Create our view classes/objects ---
         self.graphics_manager = GraphicsManager()
         self.active_tetromino_view = TetrominoView(
-            self.graphics_manager.sprite_sheet_bitmap,
-            self.graphics_manager.sprite_sheet_palette,
-            self.graphics_manager.root_group
+            sprite_sheet_bitmap = self.graphics_manager.sprite_sheet_bitmap,
+            sprite_sheet_palette = self.graphics_manager.sprite_sheet_palette,
+            root_group = self.graphics_manager.root_group,
+        )
+        self.sand_pile_view = SandPileView(
+            sprite_sheet_palette = self.graphics_manager.sprite_sheet_palette,
+            root_group = self.graphics_manager.root_group,
         )
 
         # Create our models
-        self.active_tetromino = Tetromino(constants.ShapeType.T, constants.ColorType.GREEN)
+        self.active_tetromino = Tetromino(constants.ShapeType.T, constants.ColorType.YELLOW)
+
+        self.last_frame_time = time.monotonic()
 
     def start_game_loop(self):
         """ This is the actual game loop which causes the game to happen. """
         while True:
 
-            # Step 1: Update all Models.
+            # Step 1: Calculate the time since the last frame.
+            # This will be passed into every model's update method.
+
+            start_frame_time = time.monotonic()
+            dt = start_frame_time - self.last_frame_time
+            self.last_frame_time = start_frame_time
+
+            # Step 2: Update all Models.
             # We must do this before rendering anything.
 
-            self._update_all_models()
+            self._update_all_models(dt)
 
-            # Step 2: Update all Graphics (Views).
+            # Step 3: Update all Graphics (Views).
 
             self._update_all_views()
 
-            # Step 3: Wait until next tick.
+            # Step 4: Wait until next tick.
 
-            time.sleep(constants.GAME_LOOP_DELAY)
+            frame_time = time.monotonic() - start_frame_time  # elapsed frame time
+            sleep_time = constants.TICK_RATE - frame_time
 
-    def _update_all_models(self):
+            if sleep_time > 0:
+                time.sleep(sleep_time)
+
+    def _update_all_models(self, dt: float):
         """ Helper method for game loop. We must update all models: Tetromino, SandPile, etc. before we can update the Views. """
+        proposed_tetromino_coords = self.active_tetromino.get_next_position(dt, 0)
+        new_x = proposed_tetromino_coords[0]
+        new_y = proposed_tetromino_coords[1]
 
+        if new_y > constants.GAME_HEIGHT - 12:
+            new_y = constants.GAME_HEIGHT - 12
+        self.active_tetromino.execute_approved_move(new_x, new_y)
         pass
 
     def _update_all_views(self):
@@ -66,7 +90,7 @@ class Game:
         # Notice we do not pass in Tetromino because that would break
         #   the MVC architecture. The view cannot talk to the model.
         self.active_tetromino_view.update(
-            self.active_tetromino.shape_data,
+            self.active_tetromino.get_shape_data(),
             self.active_tetromino.color_type,
             self.active_tetromino.x,
             self.active_tetromino.y,
