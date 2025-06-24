@@ -10,9 +10,9 @@ class Tetromino:
         Initializes a new Tetromino
 
         Args:
-            shape_type (ShapeType): The shape of the tetromino.py
-            color_type (ColorType): The color of the tetromino.py
-            orientation (Orientation): The orientation will almost always be starting UP.
+            shape_type (constants.ShapeType): The shape of the tetromino.py
+            color_type (constants.ColorType): The color of the tetromino.py
+            orientation (constants.Orientation): The orientation will almost always be starting UP.
             start_x (int): The starting x coordinate. Default: 0
             start_y (int): The starting y coordinate. Default: 0
         """

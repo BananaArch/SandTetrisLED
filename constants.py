@@ -19,7 +19,7 @@ INITIAL_FALL_RATE = 1.0   # Time in seconds for a piece to fall one step
 # The side (in minos) of the logical grid used to store the shape data for
 # every tetromino piece. Since all standard tetrominos fit within a 4x4 area,
 # this value is 4. It's used to translate 2D coordinates into a 1D index
-# and vice versa for the SHAPE_DATA (bytearray) shown below.
+# and vice versa for the SHAPE_DATA (bytes) shown below.
 TETROMINO_SHAPE_DATA_SIZE = 4
 
 # This is the scale-up for the Mino.
@@ -64,11 +64,11 @@ class Orientation:
     DOWN = 2
     LEFT = 3
 
-# --- Constant bytearray representing shapes and their orientation ---
+# --- Constant bytes representing shapes and their orientation ---
 
 # The number represents the column number in the spritesheet.
 
-I_SHAPE_DATA_UP = bytearray((
+I_SHAPE_DATA_UP = bytes((
 # although this is not ideal because it creates tuple, it's fine for small tuples. this might cause memory fragmentation
     0, 0, 0, 0,
     4, 5, 5, 6,
@@ -76,168 +76,168 @@ I_SHAPE_DATA_UP = bytearray((
     0, 0, 0, 0,
 ))
 
-I_SHAPE_DATA_RIGHT = bytearray((
+I_SHAPE_DATA_RIGHT = bytes((
     0, 0, 1, 0,
     0, 0, 2, 0,
     0, 0, 2, 0,
     0, 0, 3, 0,
 ))
 
-I_SHAPE_DATA_DOWN = bytearray((
+I_SHAPE_DATA_DOWN = bytes((
     0, 0, 0, 0,
     0, 0, 0, 0,
     4, 5, 5, 6,
     0, 0, 0, 0,
 ))
 
-I_SHAPE_DATA_LEFT = bytearray((
+I_SHAPE_DATA_LEFT = bytes((
     0, 1, 0, 0,
     0, 2, 0, 0,
     0, 2, 0, 0,
     0, 1, 0, 0,
 ))
 
-O_SHAPE_DATA = bytearray((
+O_SHAPE_DATA = bytes((
     0, 0, 0, 0,
     0, 7, 8, 0,
     0, 9, 10, 0,
     0, 0, 0, 0,
 ))
 
-T_SHAPE_DATA_UP = bytearray((
+T_SHAPE_DATA_UP = bytes((
     0, 1, 0, 0,
     4, 11, 6, 0,
     0, 0, 0, 0,
     0, 0, 0, 0,
 ))
 
-T_SHAPE_DATA_RIGHT = bytearray((
+T_SHAPE_DATA_RIGHT = bytes((
     0, 1, 0, 0,
     0, 12, 6, 0,
     0, 3, 0, 0,
     0, 0, 0, 0,
 ))
 
-T_SHAPE_DATA_DOWN = bytearray((
+T_SHAPE_DATA_DOWN = bytes((
     0, 0, 0, 0,
     4, 13, 6, 0,
     0, 3, 0, 0,
     0, 0, 0, 0,
 ))
 
-T_SHAPE_DATA_LEFT = bytearray((
+T_SHAPE_DATA_LEFT = bytes((
     0, 1, 0, 0,
     4, 14, 0, 0,
     0, 3, 0, 0,
     0, 0, 0, 0,
 ))
 
-J_SHAPE_DATA_UP = bytearray((
+J_SHAPE_DATA_UP = bytes((
     1, 0, 0, 0,
     9, 5, 6, 0,
     0, 0, 0, 0,
     0, 0, 0, 0,
 ))
 
-J_SHAPE_DATA_RIGHT = bytearray((
+J_SHAPE_DATA_RIGHT = bytes((
     0, 7, 6, 0,
     0, 2, 0, 0,
     0, 3, 0, 0,
     0, 0, 0, 0,
 ))
 
-J_SHAPE_DATA_DOWN = bytearray((
+J_SHAPE_DATA_DOWN = bytes((
     0, 0, 0, 0,
     4, 5, 8, 0,
     0, 0, 3, 0,
     0, 0, 0, 0,
 ))
 
-J_SHAPE_DATA_LEFT = bytearray((
+J_SHAPE_DATA_LEFT = bytes((
     0, 1, 0, 0,
     0, 2, 0, 0,
     4, 10, 0, 0,
     0, 0, 0, 0,
 ))
 
-L_SHAPE_DATA_UP = bytearray((
+L_SHAPE_DATA_UP = bytes((
     0, 0, 1, 0,
     4, 5, 10, 0,
     0, 0, 0, 0,
     0, 0, 0, 0,
 ))
 
-L_SHAPE_DATA_RIGHT = bytearray((
+L_SHAPE_DATA_RIGHT = bytes((
     0, 1, 0, 0,
     0, 2, 0, 0,
     0, 9, 6, 0,
     0, 0, 0, 0,
 ))
 
-L_SHAPE_DATA_DOWN = bytearray((
+L_SHAPE_DATA_DOWN = bytes((
     0, 0, 0, 0,
     7, 5, 6, 0,
     3, 0, 0, 0,
     0, 0, 0, 0,
 ))
 
-L_SHAPE_DATA_LEFT = bytearray((
+L_SHAPE_DATA_LEFT = bytes((
     4, 8, 0, 0,
     0, 2, 0, 0,
     0, 3, 0, 0,
     0, 0, 0, 0,
 ))
 
-S_SHAPE_DATA_UP = bytearray((
+S_SHAPE_DATA_UP = bytes((
     0, 7, 6, 0,
     4, 10, 0, 0,
     0, 0, 0, 0,
     0, 0, 0, 0,
 ))
 
-S_SHAPE_DATA_RIGHT = bytearray((
+S_SHAPE_DATA_RIGHT = bytes((
     0, 1, 0, 0,
     0, 9, 8, 0,
     0, 0, 3, 0,
     0, 0, 0, 0,
 ))
 
-S_SHAPE_DATA_DOWN = bytearray((
+S_SHAPE_DATA_DOWN = bytes((
     0, 0, 0, 0,
     0, 7, 6, 0,
     4, 10, 0, 0,
     0, 0, 0, 0,
 ))
 
-S_SHAPE_DATA_LEFT = bytearray((
+S_SHAPE_DATA_LEFT = bytes((
     1, 0, 0, 0,
     9, 8, 0, 0,
     0, 3, 0, 0,
     0, 0, 0, 0,
 ))
 
-Z_SHAPE_DATA_UP = bytearray((
+Z_SHAPE_DATA_UP = bytes((
     4, 8, 0, 0,
     0, 9, 6, 0,
     0, 0, 0, 0,
     0, 0, 0, 0,
 ))
 
-Z_SHAPE_DATA_RIGHT = bytearray((
+Z_SHAPE_DATA_RIGHT = bytes((
     0, 0, 1, 0,
     0, 7, 10, 0,
     0, 3, 0, 0,
     0, 0, 0, 0,
 ))
 
-Z_SHAPE_DATA_DOWN = bytearray((
+Z_SHAPE_DATA_DOWN = bytes((
     0, 0, 0, 0,
     4, 8, 0, 0,
     0, 9, 6, 0,
     0, 0, 0, 0,
 ))
 
-Z_SHAPE_DATA_LEFT = bytearray((
+Z_SHAPE_DATA_LEFT = bytes((
     0, 1, 0, 0,
     7, 10, 0, 0,
     3, 0, 0, 0,
@@ -249,8 +249,10 @@ Z_SHAPE_DATA_LEFT = bytearray((
 SHAPES = {
     ShapeType.I: [I_SHAPE_DATA_UP, I_SHAPE_DATA_RIGHT, I_SHAPE_DATA_DOWN, I_SHAPE_DATA_LEFT],
     ShapeType.O: [O_SHAPE_DATA, O_SHAPE_DATA, O_SHAPE_DATA, O_SHAPE_DATA],
-        # Memory: It's okay having four of the same bitearrays in the list above because
-        # python only creates one 'real' bytearray and the rest are pointers.
+        # Memory: It's okay having four of the same bytes arrays in the list above because
+        # python only creates one 'real' bytes array and the rest are pointers. Also,
+        # we don't care about flash memory as much as RAM. The bytes are typically stored
+        # in flash memory.
     ShapeType.T: [T_SHAPE_DATA_UP, T_SHAPE_DATA_RIGHT, T_SHAPE_DATA_DOWN, T_SHAPE_DATA_LEFT],
     ShapeType.L: [L_SHAPE_DATA_UP, L_SHAPE_DATA_RIGHT, L_SHAPE_DATA_DOWN, L_SHAPE_DATA_LEFT],
     ShapeType.J: [J_SHAPE_DATA_UP, J_SHAPE_DATA_RIGHT, J_SHAPE_DATA_DOWN, J_SHAPE_DATA_LEFT],
