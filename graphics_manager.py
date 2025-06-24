@@ -9,7 +9,8 @@ from adafruit_matrixportal.matrix import Matrix
 
 class GraphicsManager:
     """
-    The GraphicsManager is a view class that owns and manages all displayio objects (visual components).
+    The GraphicsManager is a view class that owns and manages the main displayio objects (visual components).
+    This includes the matrix, the display, the root_group, and the sprite sheets.
     Think about it like the Asset Manager for our program.
     """
 

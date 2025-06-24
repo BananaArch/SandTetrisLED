@@ -24,8 +24,6 @@ class Tetromino:
         self.color_type = color_type
         self.orientation = orientation
 
-    # -- Logic Methods --
-
     def get_next_position(self):
         """
         Calculates where the piece WANTS to go based on its internal physics.
@@ -42,4 +40,13 @@ class Tetromino:
 
     def rotate(self):
         """ Handles logic to rotate the piece. """
+        pass
+
+    def reset(self, shape_type : constants.ShapeType, color_type : constants.ColorType):
+        """
+        Resets the Active Tetromino into a new Tetromino with shape_type and color_type.
+        All new Tetrominos start with the UP orientation.
+        """
+        self.orientation = constants.Orientation.UP
+
         pass

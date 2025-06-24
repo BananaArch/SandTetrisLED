@@ -1,11 +1,13 @@
+# tetromino_view.py
+
 import constants
 
 import displayio
 
 class TetrominoView:
     """
-    The TetrominoView is a view class that borrows the Tetromino displayio objects
-        (visual components) from the GraphicsManager.
+    The TetrominoView is a view class that owns the Tetromino displayio objects
+        (visual components). This includes the Tetromino Group and Tetromino TileGrid.
 
     Its sole responsibility is to visually represent the state of a single Tetromino
         data model on the screen.
@@ -27,7 +29,6 @@ class TetrominoView:
             root_group (displayio.Group): The root_group connected to the display.
         """
 
-        self.tetromino_group = displayio.Group()
         self.tetromino_tile_grid = displayio.TileGrid(
             bitmap=sprite_sheet_bitmap,
             pixel_shader=sprite_sheet_palette,
@@ -37,6 +38,7 @@ class TetrominoView:
             tile_height=constants.MINO_SIZE,
         )
 
+        self.tetromino_group = displayio.Group()
         self.tetromino_group.append(self.tetromino_tile_grid)
 
         root_group.append(self.tetromino_group)

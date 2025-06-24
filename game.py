@@ -33,7 +33,7 @@ class Game:
         )
 
         # Create our models
-        self.active_tetromino = Tetromino(constants.ShapeType.J, constants.ColorType.YELLOW)
+        self.active_tetromino = Tetromino(constants.ShapeType.T, constants.ColorType.GREEN)
 
     def start_game_loop(self):
         """ This is the actual game loop which causes the game to happen. """
