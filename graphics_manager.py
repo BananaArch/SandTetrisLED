@@ -10,6 +10,7 @@ class GraphicsManager:
 
     def __init__(self):
         """ Initializes display and creates all displayio objects. """
+
         self.matrix = Matrix(
             width=constants.GAME_HEIGHT, # these need to be flipped for the actual board
             height=constants.GAME_WIDTH,
@@ -17,6 +18,8 @@ class GraphicsManager:
             rotation=270,
         )
         self.display = self.matrix.display
+        displayio.release_displays()  # ensures no previous displays displaying
+
         self.root_group = displayio.Group()
         self.display.root_group = self.root_group
 

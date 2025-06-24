@@ -1,21 +1,20 @@
 # constants.py
 # This file holds all the static configuration values for the Sand Tetris game.
 
-# -- Display and Grid Dimensions --
+# --- File location for Sprite Sheet ---
+SPRITE_FILE_LOCATION = "/spritesheet.bmp"
+
+# --- Display and Grid Dimensions ---
 GAME_WIDTH = 32
 GAME_HEIGHT = 64
 INFO_BAR_HEIGHT = 5
 PLAYFIELD_HEIGHT = GAME_HEIGHT - INFO_BAR_HEIGHT
 
-# -- Timing --
+# --- Timing ---
 GAME_LOOP_DELAY = 0.1  # A small delay in the main loop
 INITIAL_FALL_RATE = 1.0   # Time in seconds for a piece to fall one step
 
-# -- Timing --
-GAME_LOOP_DELAY = 0.01
-INITIAL_FALL_RATE = 0.5
-
-# -- Tetromino Dimensions --
+# --- Tetromino Dimensions ---
 
 # The width (in minos) of the logical grid used to store the shape data for
 # every tetromino piece. Since all standard tetrominos fit within a 4x4 area,
@@ -27,21 +26,26 @@ TETROMINO_SHAPE_DATA_WIDTH = 4
 # This means for each mino, it is going to be 3 px by 3 px
 MINO_SIZE = 3
 
-# -- Colors --
-BG_COLOR = 0x000000  # black
-RED = 0xFF0000
-GREEN = 0x00FF00
-BLUE = 0x0000FF
-YELLOW = 0xFFFF00
+# --- Colors ---
+NUM_SPRITES_PER_COLOR = 14
 
-RED_SAND_COLORS = [
-    0xFFA07A,  # Light Red
-    0xFF0000,  # Pure Red
-    0x8B0000,  # Dark Red
-    0xDC143C,  # Crimson
-]
 
-# -- Shape Enums --
+# --- Color enum class by Row Number ---
+# (e.g., Blue is Row 1, Red is Row 2, ...)
+# Used for rendering tetromino
+
+class ColorType:
+    BLUE = 1
+    RED = 2
+    GREEN = 3
+    YELLOW = 4
+    WHITE = 5
+
+# --- Tile Number for Wildcard ---
+
+WHITE_TILE = (5, 1)
+
+# --- Shape Enums ---
 
 class ShapeType:
     """Namespace for the 7 unique tetromino shapes, using strings as keys."""
@@ -60,181 +64,183 @@ class Orientation:
     DOWN = 2
     LEFT = 3
 
-# -- Constant bytearray representing shapes and their orientation --
+# --- Constant bytearray representing shapes and their orientation ---
+
+# The number represents the column number in the spritesheet.
 
 I_SHAPE_DATA_UP = bytearray((
 # although this is not ideal because it creates tuple, it's fine for small tuples. this might cause memory fragmentation
     0, 0, 0, 0,
-    1, 1, 1, 1,
+    4, 5, 5, 6,
     0, 0, 0, 0,
     0, 0, 0, 0,
 ))
 
 I_SHAPE_DATA_RIGHT = bytearray((
     0, 0, 1, 0,
-    0, 0, 1, 0,
-    0, 0, 1, 0,
-    0, 0, 1, 0,
+    0, 0, 2, 0,
+    0, 0, 2, 0,
+    0, 0, 3, 0,
 ))
 
 I_SHAPE_DATA_DOWN = bytearray((
     0, 0, 0, 0,
     0, 0, 0, 0,
-    1, 1, 1, 1,
+    4, 5, 5, 6,
     0, 0, 0, 0,
 ))
 
 I_SHAPE_DATA_LEFT = bytearray((
     0, 1, 0, 0,
-    0, 1, 0, 0,
-    0, 1, 0, 0,
+    0, 2, 0, 0,
+    0, 2, 0, 0,
     0, 1, 0, 0,
 ))
 
 O_SHAPE_DATA = bytearray((
     0, 0, 0, 0,
-    0, 1, 1, 0,
-    0, 1, 1, 0,
+    0, 7, 8, 0,
+    0, 9, 10, 0,
     0, 0, 0, 0,
 ))
 
 T_SHAPE_DATA_UP = bytearray((
     0, 1, 0, 0,
-    1, 1, 1, 0,
+    4, 11, 6, 0,
     0, 0, 0, 0,
     0, 0, 0, 0,
 ))
 
 T_SHAPE_DATA_RIGHT = bytearray((
     0, 1, 0, 0,
-    0, 1, 1, 0,
-    0, 1, 0, 0,
+    0, 12, 6, 0,
+    0, 3, 0, 0,
     0, 0, 0, 0,
 ))
 
 T_SHAPE_DATA_DOWN = bytearray((
     0, 0, 0, 0,
-    1, 1, 1, 0,
-    0, 1, 0, 0,
+    4, 13, 6, 0,
+    0, 3, 0, 0,
     0, 0, 0, 0,
 ))
 
 T_SHAPE_DATA_LEFT = bytearray((
     0, 1, 0, 0,
-    1, 1, 0, 0,
-    0, 1, 0, 0,
+    4, 14, 0, 0,
+    0, 3, 0, 0,
     0, 0, 0, 0,
 ))
 
 J_SHAPE_DATA_UP = bytearray((
     1, 0, 0, 0,
-    1, 1, 1, 0,
+    9, 5, 6, 0,
     0, 0, 0, 0,
     0, 0, 0, 0,
 ))
 
 J_SHAPE_DATA_RIGHT = bytearray((
-    0, 1, 1, 0,
-    0, 1, 0, 0,
-    0, 1, 0, 0,
+    0, 7, 6, 0,
+    0, 2, 0, 0,
+    0, 3, 0, 0,
     0, 0, 0, 0,
 ))
 
 J_SHAPE_DATA_DOWN = bytearray((
     0, 0, 0, 0,
-    1, 1, 1, 0,
-    0, 0, 1, 0,
+    4, 5, 8, 0,
+    0, 0, 3, 0,
     0, 0, 0, 0,
 ))
 
 J_SHAPE_DATA_LEFT = bytearray((
     0, 1, 0, 0,
-    0, 1, 0, 0,
-    1, 1, 0, 0,
+    0, 2, 0, 0,
+    4, 10, 0, 0,
     0, 0, 0, 0,
 ))
 
 L_SHAPE_DATA_UP = bytearray((
     0, 0, 1, 0,
-    1, 1, 1, 0,
+    4, 5, 10, 0,
     0, 0, 0, 0,
     0, 0, 0, 0,
 ))
 
 L_SHAPE_DATA_RIGHT = bytearray((
     0, 1, 0, 0,
-    0, 1, 0, 0,
-    0, 1, 1, 0,
+    0, 2, 0, 0,
+    0, 9, 6, 0,
     0, 0, 0, 0,
 ))
 
 L_SHAPE_DATA_DOWN = bytearray((
     0, 0, 0, 0,
-    1, 1, 1, 0,
-    1, 0, 0, 0,
+    7, 5, 6, 0,
+    3, 0, 0, 0,
     0, 0, 0, 0,
 ))
 
 L_SHAPE_DATA_LEFT = bytearray((
-    1, 1, 0, 0,
-    0, 1, 0, 0,
-    0, 1, 0, 0,
+    4, 8, 0, 0,
+    0, 2, 0, 0,
+    0, 3, 0, 0,
     0, 0, 0, 0,
 ))
 
 S_SHAPE_DATA_UP = bytearray((
-    0, 1, 1, 0,
-    1, 1, 0, 0,
+    0, 7, 6, 0,
+    4, 10, 0, 0,
     0, 0, 0, 0,
     0, 0, 0, 0,
 ))
 
 S_SHAPE_DATA_RIGHT = bytearray((
     0, 1, 0, 0,
-    0, 1, 1, 0,
-    0, 0, 1, 0,
+    0, 9, 8, 0,
+    0, 0, 3, 0,
     0, 0, 0, 0,
 ))
 
 S_SHAPE_DATA_DOWN = bytearray((
     0, 0, 0, 0,
-    0, 1, 1, 0,
-    1, 1, 0, 0,
+    0, 7, 6, 0,
+    4, 10, 0, 0,
     0, 0, 0, 0,
 ))
 
 S_SHAPE_DATA_LEFT = bytearray((
     1, 0, 0, 0,
-    1, 1, 0, 0,
-    0, 1, 0, 0,
+    9, 8, 0, 0,
+    0, 3, 0, 0,
     0, 0, 0, 0,
 ))
 
 Z_SHAPE_DATA_UP = bytearray((
-    1, 1, 0, 0,
-    0, 1, 1, 0,
+    4, 8, 0, 0,
+    0, 9, 6, 0,
     0, 0, 0, 0,
     0, 0, 0, 0,
 ))
 
 Z_SHAPE_DATA_RIGHT = bytearray((
     0, 0, 1, 0,
-    0, 1, 1, 0,
-    0, 1, 0, 0,
+    0, 7, 10, 0,
+    0, 3, 0, 0,
     0, 0, 0, 0,
 ))
 
 Z_SHAPE_DATA_DOWN = bytearray((
     0, 0, 0, 0,
-    1, 1, 0, 0,
-    0, 1, 1, 0,
+    4, 8, 0, 0,
+    0, 9, 6, 0,
     0, 0, 0, 0,
 ))
 
 Z_SHAPE_DATA_LEFT = bytearray((
     0, 1, 0, 0,
-    1, 1, 0, 0,
-    1, 0, 0, 0,
+    7, 10, 0, 0,
+    3, 0, 0, 0,
     0, 0, 0, 0,
 ))
 
