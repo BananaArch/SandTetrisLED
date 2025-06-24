@@ -23,9 +23,13 @@ class Game:
             and the Active Tetromino.
         """
         self.graphics_manager = GraphicsManager()
+        self.active_tetromino = Tetromino(constants.ShapeType.S, constants.ColorType.YELLOW)
+        self.graphics_manager.create_tetromino_tile_grid_and_group(self.active_tetromino)
 
     def start_game_loop(self):
         """ This is the actual game loop which causes the game to happen. """
         while True:
-            self.graphics_manager.update_display()
+
+
+            self.graphics_manager.update_display(self.active_tetromino)
             time.sleep(constants.GAME_LOOP_DELAY)

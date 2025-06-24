@@ -16,18 +16,18 @@ INITIAL_FALL_RATE = 1.0   # Time in seconds for a piece to fall one step
 
 # --- Tetromino Dimensions ---
 
-# The width (in minos) of the logical grid used to store the shape data for
+# The side (in minos) of the logical grid used to store the shape data for
 # every tetromino piece. Since all standard tetrominos fit within a 4x4 area,
 # this value is 4. It's used to translate 2D coordinates into a 1D index
 # and vice versa for the SHAPE_DATA (bytearray) shown below.
-TETROMINO_SHAPE_DATA_WIDTH = 4
+TETROMINO_SHAPE_DATA_SIZE = 4
 
 # This is the scale-up for the Mino.
 # This means for each mino, it is going to be 3 px by 3 px
 MINO_SIZE = 3
 
 # --- Colors ---
-NUM_SPRITES_PER_COLOR = 14
+NUM_SPRITES_PER_COLOR = 15
 
 
 # --- Color enum class by Row Number ---
@@ -35,11 +35,11 @@ NUM_SPRITES_PER_COLOR = 14
 # Used for rendering tetromino
 
 class ColorType:
-    BLUE = 1
-    RED = 2
-    GREEN = 3
-    YELLOW = 4
-    WHITE = 5
+    BLUE = 0
+    RED = 1
+    GREEN = 2
+    YELLOW = 3
+    WHITE = 4
 
 # --- Tile Number for Wildcard ---
 

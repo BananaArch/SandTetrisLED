@@ -1,25 +1,30 @@
 # tetromino.py
 
+import constants
+
 class Tetromino:
     """ This class is a model class that represents the active, falling Tetromino. """
 
-    def __init__(self, shape_type, orientation=Orientation.UP, start_x = 0, start_y = 0, rotation=0):
+    def __init__(self, shape_type: constants.ShapeType, color_type: constants.ColorType, start_x: int = 0, start_y: int = 0, orientation: constants.Orientation = constants.Orientation.UP):
         """
         Initializes a new Tetromino
 
         Args:
             shape_type (ShapeType): The shape of the tetromino.py
+            color_type (ColorType): The color of the tetromino.py
             orientation (Orientation): The orientation will almost always be starting UP.
             start_x (int): The starting x coordinate. Default: 0
             start_y (int): The starting y coordinate. Default: 0
-            rotation (int): Its rotation value. Default: 0
         """
 
         self.x = start_x
         self.y = start_y
-        self.shape = shape
-        self.rotation = rotation
+        self.shape_type = shape_type
+        self.shape_data = constants.SHAPES[shape_type][orientation]
+        self.color_type = color_type
+        self.orientation = orientation
 
+    # -- Logic Methods --
 
     def get_next_position(self):
         """
