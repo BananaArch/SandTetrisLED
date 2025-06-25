@@ -16,9 +16,18 @@ TPS = 20  # The amount of ticks that run in a single second
 # fast as it can.
 TICK_RATE = 1.0 / TPS
 
+# --- Input ---
+MATRIX_PORTAL_LIS3DH_ADDRESS = 0x19
+TAP_THRESHOLD = 127
+SHAKE_THRESHOLD = 12
+
 # --- Tetromino Physics ---
-INITIAL_FALL_RATE = 0.05  # the seconds it takes for the tetromino to fall 1 px.
-FALL_RATE_DECREMENTATION_FACTOR = 0.75  # The fall rate gets 90% debuff
+INITIAL_FALL_RATE = 0.25  # the seconds it takes for the tetromino to fall 1 px.
+FALL_RATE_DECREMENTATION_RATE = 0.05  # removes this value from the fall_rate when Tetromino calls decrement_fall_rate()
+TILT_THRESHOLD_SMALL_RIGHT = 15.0  # the tilt (in degrees) it takes to move the tetromino right slowly
+TILT_THRESHOLD_SMALL_LEFT = -15.0  # the tilt (in degrees) it takes to move the tetromino left slowly
+TILT_THRESHOLD_LARGE_RIGHT = 45.0  # the tilt (in degrees) it takes to move the tetromino right quickly
+TILT_THRESHOLD_LARGE_LEFT = -45.0  # the tilt (in degrees) it takes to move the tetromino left quickly
 
 # --- Tetromino Dimensions ---
 
@@ -69,6 +78,8 @@ class Orientation:
     RIGHT = 1
     DOWN = 2
     LEFT = 3
+
+NUM_ORIENTATIONS = 4
 
 # --- Constant bytes representing shapes and their orientation ---
 

@@ -31,6 +31,9 @@ class Tetromino:
     def get_shape_data(self):
         return constants.SHAPES[self.shape_type][self.orientation]
 
+    def get_coords(self):
+        return (self.x, self.y)
+
     def get_next_position(self, dt: float, tilt_angle : float):
         """
         Calculates where the piece WANTS to go based on its internal physics.
@@ -41,13 +44,24 @@ class Tetromino:
             tilt_angle (float): the angle at which the matrix is tilted.
         """
 
+        proposed_dx = 0
+        proposed_dy = 0
+
         self.gravity_timer += dt
 
         if self.gravity_timer >= self.fall_rate:  # If enough time has passed, a gravity step will occur
-            return (self.x, self.y + 1)
+            proposed_dy = 1
 
+        if tilt_angle > constants.TILT_THRESHOLD_LARGE_RIGHT:
+            proposed_dx = 2
+        elif tilt_angle > constants.TILT_THRESHOLD_SMALL_RIGHT:
+            proposed_dx = 1
+        elif tilt_angle < constants.TILT_THRESHOLD_LARGE_LEFT:
+            proposed_dx = -2
+        elif tilt_angle < constants.TILT_THRESHOLD_SMALL_LEFT:
+            proposed_dx = -1
 
-        return (self.x, self.y)
+        return (self.x + proposed_dx, self.y + proposed_dy)
 
     def execute_approved_move(self, new_x : int, new_y : int):
         """
@@ -63,8 +77,7 @@ class Tetromino:
 
     def decrement_fall_rate(self):
 
-        new_fall_rate = self.fall_rate * constants.FALL_RATE_DECREMENTATION_FACTOR
-
+        new_fall_rate = self.fall_rate - constants.FALL_RATE_DECREMENTATION_RATE
         if new_fall_rate < constants.TICK_RATE:  # The tetromino can't fall faster than TPS
             self.fall_rate = constants.TICK_RATE
         else:
@@ -72,7 +85,9 @@ class Tetromino:
 
     def rotate(self):
         """ Handles logic to rotate the piece. """
-        pass
+
+        self.orientation = (self.orientation + 1) % constants.NUM_ORIENTATIONS
+
 
     def reset(self, shape_type : constants.ShapeType, color_type : constants.ColorType):
         """
