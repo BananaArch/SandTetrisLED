@@ -45,6 +45,8 @@ class SandPileView:
             height=1, # The grid is only 1 tile high
             tile_width=constants.GAME_WIDTH,
             tile_height=constants.PLAYFIELD_HEIGHT,
+            x=0,
+            y=constants.INFO_BAR_HEIGHT,
         )
 
         root_group.append(self._sand_tile_grid)

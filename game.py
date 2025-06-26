@@ -8,7 +8,6 @@ from sand_pile import SandPile
 import constants
 
 import adafruit_lis3dh
-
 import board
 import busio
 import math
@@ -31,7 +30,6 @@ class Game:
         """
 
         # --- Initialize hardware ---
-
         i2c = busio.I2C(board.SCL, board.SDA)  # Setup I2C for the accelerometer
         self.lis3dh = adafruit_lis3dh.LIS3DH_I2C(i2c, address=constants.MATRIX_PORTAL_LIS3DH_ADDRESS)  # Creates accelerometer object
         self.lis3dh.range = adafruit_lis3dh.RANGE_2_G  # Sets a range of 2G for sensitivity
@@ -40,24 +38,23 @@ class Game:
         # --- Create our view classes/objects ---
         self.graphics_manager = GraphicsManager()
         self.active_tetromino_view = TetrominoView(
-            sprite_sheet_bitmap = self.graphics_manager.sprite_sheet_bitmap,
-            sprite_sheet_palette = self.graphics_manager.sprite_sheet_palette,
-            root_group = self.graphics_manager.root_group,
+            sprite_sheet_bitmap=self.graphics_manager.sprite_sheet_bitmap,
+            sprite_sheet_palette=self.graphics_manager.sprite_sheet_palette,
+            root_group=self.graphics_manager.root_group,
         )
         self.sand_pile_view = SandPileView(
-            sprite_sheet_palette = self.graphics_manager.sprite_sheet_palette,
-            root_group = self.graphics_manager.root_group,
+            sprite_sheet_palette=self.graphics_manager.sprite_sheet_palette,
+            root_group=self.graphics_manager.root_group,
         )
 
         # --- Create our models classes/objects ---
-        self.active_tetromino = Tetromino(constants.ShapeType.T, constants.ColorType.YELLOW)
+        self.active_tetromino = Tetromino(constants.ShapeType.Z, constants.ColorType.GREEN)
         self.sand_pile = SandPile(self.sand_pile_view.sand_state_bitmap)
 
         # -- Create variables related with the game-loop
         self.last_frame_time = time.monotonic()
         self.is_game_over = False
-
-
+        self.time_since_tapped = 0.0
 
     def _get_all_inputs(self):
         """
@@ -67,81 +64,141 @@ class Game:
             dict: A dictionary containing the state of all inputs, e.g.,
                   {'shaken': bool, 'tapped': bool, 'tilt_angle': float}
         """
-
         # --- Shake ---
-        # The .shake() method returns True if the acceleration exceeds a threshold.
         was_shaken = self.lis3dh.shake(shake_threshold=constants.SHAKE_THRESHOLD)
 
         # --- Double Tap ---
-        # The .tapped property is True for one frame after a tap is detected,
-        # then it resets to False automatically.
-        was_tapped = self.lis3dh.tapped
+        if (self.time_since_tapped > constants.TAP_DELAY) and self.lis3dh.tapped:
+            was_tapped = True
+            self.time_since_tapped = 0.0
+        else:
+            was_tapped = False
+            self.time_since_tapped += constants.TICK_RATE
 
         # --- Tilt Angle ---
-        # Get the raw x, y, z acceleration values.
         try:
             ax, ay, az = self.lis3dh.acceleration
         except OSError:
-            # Sometimes I2C can fail, return a neutral angle
             return {"shaken": False, "tapped": False, "tilt_angle": 0.0}
 
-        # Calculate the angle in radians using atan2.
-        # We use -ay and ax. The specific axes might need to be tweaked
-        # depending on your board's physical orientation.
         angle_rad = math.atan2(-ay, ax)
-
-        # Convert radians to degrees for easier use.
         angle_deg = math.degrees(angle_rad)
 
-        # Return all inputs in a clean dictionary
         return {
             "shaken": was_shaken,
             "tapped": was_tapped,
             "tilt_angle": angle_deg
         }
 
-    def _is_tetromino_collision(self):
+    def _is_tetromino_collision(self, proposed_x: int, proposed_y: int):
         """
         Helper method for _update_all_models method.
-        returns whether a tetromino is colliding
+        returns whether a tetromino is colliding.
+
+        Checks whether the active Tetromino at the proposed new position would collide
+        with the ground or existing sand. This does not check if it hits the wall.
+
+        Args:
+            proposed_x (int): The proposed new x-coordinate for the active tetromino.
+            proposed_y (int): The proposed new y-coordinate for the active tetromino.
         """
-        pass
+
+        # Get the vertical space that is empty in the tetromino's shape
+        bottom_padding = self.active_tetromino.get_bottom_padding()
+
+        # Calculate the total height of the tetromino shape in pixels
+        shape_total_height = constants.TETROMINO_SHAPE_DATA_SIZE * constants.MINO_SIZE
+        bottom_edge_position = proposed_y + (shape_total_height - 1) - bottom_padding
+
+        if bottom_edge_position >= constants.GAME_HEIGHT:
+            return True
+
+        # TODO: Check sand collision here
+
+        return False
+
+    def _tetromino_hits_wall(self, proposed_x: int) -> bool:
+        """
+        Determines whether the active tetromino would collide with the left or right wall
+        of the game board at the proposed horizontal position.
+
+        Args:
+            proposed_x (int): The proposed new x-coordinate for the active tetromino.
+
+        Returns:
+            bool: True if the tetromino would collide with the wall, False otherwise.
+        """
+
+        # Get the amount of horizontal space on the left and right that is empty in the tetromino's shape
+        left_padding = self.active_tetromino.get_left_padding()
+        right_padding = self.active_tetromino.get_right_padding()
+
+        # Calculate the total width of the tetromino shape in pixels
+        shape_total_width = constants.TETROMINO_SHAPE_DATA_SIZE * constants.MINO_SIZE
+
+        # Calculate the far left and far right boundaries of the tetromino at the proposed position
+        left_edge_position = proposed_x + left_padding
+        right_edge_position = proposed_x + (shape_total_width - 1) - right_padding
+
+        # Determine whether the tetromino goes beyond the left or right wall
+        hits_left_wall = left_edge_position < 0
+        hits_right_wall = right_edge_position >= constants.GAME_WIDTH
+
+        return hits_left_wall or hits_right_wall
+
+    def _handle_rotations(self):
+        original_orientation = self.active_tetromino.orientation
+        original_x = self.active_tetromino.x
+        original_y = self.active_tetromino.y
+
+        self.active_tetromino.rotate()
+
+        if self._is_tetromino_collision(original_x, original_y):
+            self.active_tetromino.set_orientation(original_orientation)
+
+        elif self._tetromino_hits_wall(original_x):
+            shift_found = False
+
+            for shift in range(1, constants.MAX_SHIFTS + 1):
+                self.active_tetromino.x = original_x - shift
+                if not self._tetromino_hits_wall(self.active_tetromino.x):
+                    shift_found = True
+                    break
+
+                self.active_tetromino.x = original_x + shift
+                if not self._tetromino_hits_wall(self.active_tetromino.x):
+                    shift_found = True
+                    break
+
+            if not shift_found:
+                self.active_tetromino.set_orientation(original_orientation)
+                self.active_tetromino.x = original_x
 
     def _update_all_models(self, dt: float, inputs):
-        """ Helper method for game loop. We must update all models: Tetromino, SandPile, etc. before we can update the Views. """
 
-        # --- UPDATE TETROMINO MODEL FIRST ---
+        if inputs["tapped"]:
+            self._handle_rotations()
 
-        if (inputs["tapped"]):
-            self.active_tetromino.rotate()
+        old_x = self.active_tetromino.x
+        old_y = self.active_tetromino.y
+        new_x, new_y = self.active_tetromino.get_next_position(dt, inputs["tilt_angle"])
 
-        proposed_tetromino_coords = self.active_tetromino.get_next_position(dt, inputs["tilt_angle"])
+        colliding = self._is_tetromino_collision(new_x, new_y)
+        hits_wall = self._tetromino_hits_wall(new_x)
 
-        new_x = proposed_tetromino_coords[0]
-        new_y = proposed_tetromino_coords[1]
-
-        if new_y > constants.GAME_HEIGHT - 6:
+        if colliding:
             new_y = 0
+            self.sand_pile.convert_tetromino_to_sand(self.active_tetromino, self.graphics_manager.sprite_sheet_bitmap)
             self.active_tetromino.decrement_fall_rate()
 
-        if new_x < 0:
-            new_x = 0
-        elif new_x > constants.GAME_WIDTH:
-            new_x = constants.GAME_WIDTH
+        if hits_wall:
+            new_x = old_x
 
         self.active_tetromino.execute_approved_move(new_x, new_y)
-        pass
-
-        # --- UPDATE SAND MODEL ---
 
     def _update_all_views(self):
-        """ Helper method to render everything, and update all the view classes: TetrominoView, SandPileView, etc. """
+        self.graphics_manager.begin_frame()
 
-        self.graphics_manager.begin_frame()  # Tells the graphics manager to pause refereshes
-
-        # Update Tetromino View First
-        # Notice we do not pass in Tetromino because that would break
-        #   the MVC architecture. The view cannot talk to the model.
         self.active_tetromino_view.update(
             self.active_tetromino.get_shape_data(),
             self.active_tetromino.color_type,
@@ -149,44 +206,23 @@ class Game:
             self.active_tetromino.y,
         )
 
-        self.graphics_manager.end_frame() # Tells the graphics manager: we're done... time to show the result
+        self.graphics_manager.end_frame()
 
     def start_game_loop(self):
-        """ This is the actual game loop which causes the game to happen. """
-
-        # Game Logic
         while not self.is_game_over:
-
-            # Step 1: Calculate the time since the last frame.
-            # This will be passed into every model's update method.
-
             start_frame_time = time.monotonic()
             dt = start_frame_time - self.last_frame_time
             self.last_frame_time = start_frame_time
 
-            # Step 2: Read all inputs.
-            # We must do this before updating the models.
-
             inputs = self._get_all_inputs()
-            print(inputs)
-
-            # Step 3: Update all Models.
-            # We must do this before rendering anything.
-
             self._update_all_models(dt, inputs)
-
-            # Step 4: Update all Graphics (Views).
-
             self._update_all_views()
 
-            # Step 5: Wait until next tick.
-
-            frame_time = time.monotonic() - start_frame_time  # elapsed frame time
+            frame_time = time.monotonic() - start_frame_time
             sleep_time = constants.TICK_RATE - frame_time
 
             if sleep_time > 0:
                 time.sleep(sleep_time)
 
-        # Game Over Logic
         while True:
             pass

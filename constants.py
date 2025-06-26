@@ -18,16 +18,17 @@ TICK_RATE = 1.0 / TPS
 
 # --- Input ---
 MATRIX_PORTAL_LIS3DH_ADDRESS = 0x19
-TAP_THRESHOLD = 127
+TAP_THRESHOLD = 90
 SHAKE_THRESHOLD = 12
+TAP_DELAY = 0.0  # the time in seconds before another tap (rotate) can occur
 
 # --- Tetromino Physics ---
-INITIAL_FALL_RATE = 0.25  # the seconds it takes for the tetromino to fall 1 px.
+INITIAL_FALL_RATE = 0.05  # the seconds it takes for the tetromino to fall 1 px.
 FALL_RATE_DECREMENTATION_RATE = 0.05  # removes this value from the fall_rate when Tetromino calls decrement_fall_rate()
-TILT_THRESHOLD_SMALL_RIGHT = 15.0  # the tilt (in degrees) it takes to move the tetromino right slowly
-TILT_THRESHOLD_SMALL_LEFT = -15.0  # the tilt (in degrees) it takes to move the tetromino left slowly
-TILT_THRESHOLD_LARGE_RIGHT = 45.0  # the tilt (in degrees) it takes to move the tetromino right quickly
-TILT_THRESHOLD_LARGE_LEFT = -45.0  # the tilt (in degrees) it takes to move the tetromino left quickly
+TETROMINO_FALLEN_NEXT_LEVEL = 10  # requires 10 tetrominos to fall to speed up
+
+TILT_THRESHOLD_SMALL_RIGHT = 15.0  # the tilt (in degrees) it takes to move the tetromino rightslowly
+TILT_THRESHOLD_SMALL_LEFT = -15.0  # the tilt (in degrees) it takes to move the tetromino left
 
 # --- Tetromino Dimensions ---
 
@@ -40,6 +41,11 @@ TETROMINO_SHAPE_DATA_SIZE = 4
 # This is the scale-up for the Mino.
 # This means for each mino, it is going to be 3 px by 3 px
 MINO_SIZE = 3
+
+# --- Tetromino Rotation Logic ---
+MAX_SHIFTS = MINO_SIZE
+# the maximum shifts/wall kick positions it will move until it
+# it gives up trying to find a valid position
 
 # --- Colors ---
 NUM_SPRITES_PER_COLOR = 15

@@ -34,6 +34,80 @@ class Tetromino:
     def get_coords(self):
         return (self.x, self.y)
 
+    def get_right_padding(self):
+
+        pass
+
+    def get_left_padding(self):
+
+        shape_data = self.get_shape_data()
+        array_width = constants.TETROMINO_SHAPE_DATA_SIZE
+        array_height = constants.TETROMINO_SHAPE_DATA_SIZE
+
+        for col in range(array_width):
+
+            column_occupied = False
+
+            for row in range(array_height):
+
+                index = row * array_width + col
+
+                if shape_data[index] != 0:
+                    column_occupied = True
+                    break
+
+            if column_occupied:
+                return col * constants.MINO_SIZE
+
+        return array_width * constants.MINO_SIZE
+
+    def get_right_padding(self):
+
+        shape_data = self.get_shape_data()
+        array_width = constants.TETROMINO_SHAPE_DATA_SIZE
+        array_height = constants.TETROMINO_SHAPE_DATA_SIZE
+
+        for col in range(array_width - 1, -1, -1):  # iterate columns backwards
+
+            column_occupied = False
+
+            for row in range(array_height):
+
+                index = row * array_width + col
+
+                if shape_data[index] != 0:
+                    column_occupied = True
+                    break
+
+            if column_occupied:
+                return ((array_width - 1) - col) * constants.MINO_SIZE
+
+        return array_width * constants.MINO_SIZE
+
+
+    def get_bottom_padding(self):
+
+        shape_data = self.get_shape_data()
+        array_width = constants.TETROMINO_SHAPE_DATA_SIZE
+        array_height = constants.TETROMINO_SHAPE_DATA_SIZE
+
+        for row in range(array_height - 1, -1, -1):  # iterate rows backwards
+
+            row_occupied = False
+
+            for col in range(array_width):
+
+                index = row * array_width + col
+
+                if shape_data[index] != 0:
+                    row_occupied = True
+                    break
+
+            if row_occupied:
+                return ((array_height - 1) - row) * constants.MINO_SIZE  # returns it in px
+
+        return array_height * constants.MINO_SIZE
+
     def get_next_position(self, dt: float, tilt_angle : float):
         """
         Calculates where the piece WANTS to go based on its internal physics.
@@ -52,12 +126,8 @@ class Tetromino:
         if self.gravity_timer >= self.fall_rate:  # If enough time has passed, a gravity step will occur
             proposed_dy = 1
 
-        if tilt_angle > constants.TILT_THRESHOLD_LARGE_RIGHT:
-            proposed_dx = 2
-        elif tilt_angle > constants.TILT_THRESHOLD_SMALL_RIGHT:
+        if tilt_angle > constants.TILT_THRESHOLD_SMALL_RIGHT:
             proposed_dx = 1
-        elif tilt_angle < constants.TILT_THRESHOLD_LARGE_LEFT:
-            proposed_dx = -2
         elif tilt_angle < constants.TILT_THRESHOLD_SMALL_LEFT:
             proposed_dx = -1
 
@@ -88,6 +158,8 @@ class Tetromino:
 
         self.orientation = (self.orientation + 1) % constants.NUM_ORIENTATIONS
 
+    def set_orientation(self, orientation: constants.Orientation):
+        self.orientation = orientation
 
     def reset(self, shape_type : constants.ShapeType, color_type : constants.ColorType):
         """

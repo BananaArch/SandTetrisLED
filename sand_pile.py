@@ -1,7 +1,9 @@
 # sand_pile.py
 
 import displayio
+
 from tetromino import Tetromino
+import constants
 
 class SandPile:
     """
@@ -29,28 +31,67 @@ class SandPile:
         self.sand_state_bitmap = sand_bitmap
         pass
 
-    def is_collision(self, tetromino: Tetromino, dx=0, dy=0):
+    def convert_tetromino_to_sand(self, tetromino: Tetromino, sprite_sheet_bitmap: displayio.Bitmap):
         """
-        Checks if a given Tetromino at a proposed new position would collide
-        with the grid boundaries or existing sand.
+        Converts the given Tetromino to sand. This method has access to sprite_sheet_bitmap (a view) because it's a
+        pragmatic decision based on the fact that our main 2D array is a bitmap (view).
 
         Args:
-            tetromino (Tetromino): The tetromino object to check.
-            dx (int, optional): The proposed change in x. Default: 0
-            dy (int, optional): The proposed change in y. Default: 0
+            tetromino (Tetromino): The tetromino object to convert to sand.
+            sprite_sheet_bitmap
+            sprite_sheet_bitmap (displayio.Bitmap): The spritesheet bitmap
+            that contains all sprites for minos. This is used to stamp
+            the colors and palettes into the sand_bitmap.
         """
 
-        pass
+        shape_data = tetromino.get_shape_data()
 
-    def convert_tetromino_to_sand(self, tetromino: Tetromino):
-        """
-        Converts the given Tetromino to sand.
+        # Loop through each of the 16 slots in the 4x4 shape data grid.
+        # `i` will be the index from 0-15.
+        # `tile_col_index` is the value from the bytearray (the sprite's column).
+        for i, tile_col_index in enumerate(shape_data):
 
-        Args:
-            tetromino (Tetromino): The tetromino object to convert to snd.
-        """
+            # If the index is 0, it's an empty part of the shape, so we skip it.
+            if tile_col_index != 0:
 
-        pass
+                # --- Step 1: Calculate the destination position ---
+                # First, find the logical (x,y) of this mino within the 4x4 piece grid.
+                mino_grid_x = i % constants.TETROMINO_SHAPE_DATA_SIZE
+                mino_grid_y = i // constants.TETROMINO_SHAPE_DATA_SIZE
+
+                # Now, find the top-left *pixel* coordinate where this mino should be stamped
+                # onto the sand bitmap.
+                dest_start_x = tetromino.x + mino_grid_x * constants.MINO_SIZE
+                dest_start_y = tetromino.y + mino_grid_y * constants.MINO_SIZE
+
+                # --- Step 2: Calculate the source position ---
+                # Find the top-left *pixel* coordinate of the source sprite on the sprite sheet.
+                source_start_x = tile_col_index * constants.MINO_SIZE
+                source_start_y = tetromino.color_type * constants.MINO_SIZE
+
+                # --- Step 3: Copy the 3x3 pixels ---
+                # Now we loop 3x3 times to copy the mino's pixels.
+                for y_offset in range(constants.MINO_SIZE):
+                    for x_offset in range(constants.MINO_SIZE):
+
+                        # Calculate the final source pixel to read from
+                        source_x = source_start_x + x_offset
+                        source_y = source_start_y + y_offset
+
+                        # Calculate the final destination pixel to write to
+                        dest_x = dest_start_x + x_offset
+                        dest_y = dest_start_y + y_offset - constants.INFO_BAR_HEIGHT
+                        # the INFO_BAR_HEIGHT accounts for the fact that the playfield area is 5 px below y=0
+
+                        # Safety check to ensure we don't write out of bounds
+                        if (0 <= dest_x < self.sand_state_bitmap.width and
+                            0 <= dest_y < self.sand_state_bitmap.height):
+
+                            # Copy the pixel's index value from the sprite sheet
+                            # to the sand pile's state bitmap.
+                            pixel_value = sprite_sheet_bitmap[source_x, source_y]
+
+                            self.sand_state_bitmap[dest_x, dest_y] = pixel_value
 
     def apply_sand_physics(self):
         """
