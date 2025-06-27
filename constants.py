@@ -18,9 +18,9 @@ TICK_RATE = 1.0 / TPS
 
 # --- Input ---
 MATRIX_PORTAL_LIS3DH_ADDRESS = 0x19
-TAP_THRESHOLD = 90
+TAP_THRESHOLD = 100
 SHAKE_THRESHOLD = 12
-TAP_DELAY = 0.0  # the time in seconds before another tap (rotate) can occur
+TAP_DELAY = 0.00  # the time in seconds before another tap (rotate) can occur
 
 # --- Tetromino Physics ---
 INITIAL_FALL_RATE = 0.05  # the seconds it takes for the tetromino to fall 1 px.
@@ -42,8 +42,11 @@ TETROMINO_SHAPE_DATA_SIZE = 4
 # This means for each mino, it is going to be 3 px by 3 px
 MINO_SIZE = 3
 
+# --- Tetromino Starting Location ---
+TETROMINO_START_X = 13  # where the tetromino starts
+
 # --- Tetromino Rotation Logic ---
-MAX_SHIFTS = MINO_SIZE
+MAX_SHIFTS = 6
 # the maximum shifts/wall kick positions it will move until it
 # it gives up trying to find a valid position
 
@@ -61,10 +64,6 @@ class ColorType:
     GREEN = 2
     YELLOW = 3
     WHITE = 4
-
-# --- Tile Number for Wildcard ---
-
-WHITE_TILE = (5, 1)
 
 # --- Shape Enums ---
 
@@ -86,6 +85,35 @@ class Orientation:
     LEFT = 3
 
 NUM_ORIENTATIONS = 4
+
+# --- Lists for Random Selection ---
+
+# A list of all possible shape types to be used with random.choice()
+SHAPE_TYPE_POPULATION = [
+    ShapeType.I, ShapeType.O, ShapeType.T, ShapeType.L,
+    ShapeType.J, ShapeType.S, ShapeType.Z
+]
+
+# A list of all possible color types for weighted selection
+COLOR_TYPE_POPULATION_WEIGHTED = [
+    ColorType.BLUE, ColorType.BLUE, ColorType.BLUE, ColorType.BLUE,
+    ColorType.RED, ColorType.RED, ColorType.RED, ColorType.RED,
+    ColorType.GREEN, ColorType.GREEN, ColorType.GREEN, ColorType.GREEN,
+    ColorType.YELLOW, ColorType.YELLOW, ColorType.YELLOW, ColorType.YELLOW,
+    ColorType.WHITE
+]
+
+NEXT_COLOR_CHANCE = 0.5
+
+# The corresponding weights for the color
+COLOR_WEIGHTS = [
+    22.5,  # Blue
+    22.5,  # Red
+    22.5,  # Green
+    22.5,  # Yellow
+    10.0,  # White (wildcard, rare)
+]
+
 
 # --- Constant bytes representing shapes and their orientation ---
 
@@ -117,7 +145,7 @@ I_SHAPE_DATA_LEFT = bytes((
     0, 1, 0, 0,
     0, 2, 0, 0,
     0, 2, 0, 0,
-    0, 1, 0, 0,
+    0, 3, 0, 0,
 ))
 
 O_SHAPE_DATA = bytes((

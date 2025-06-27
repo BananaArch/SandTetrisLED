@@ -5,7 +5,7 @@ import constants
 class Tetromino:
     """ This class is a model class that represents the active, falling Tetromino. """
 
-    def __init__(self, shape_type: constants.ShapeType, color_type: constants.ColorType, start_x: int = 0, start_y: int = 0, fall_rate : float = constants.INITIAL_FALL_RATE, orientation: constants.Orientation = constants.Orientation.UP):
+    def __init__(self, shape_type: constants.ShapeType, color_type: constants.ColorType, start_x: int = constants.TETROMINO_START_X // 2, start_y: int = 0, fall_rate : float = constants.INITIAL_FALL_RATE, orientation: constants.Orientation = constants.Orientation.UP):
         """
         Initializes a new Tetromino
 
@@ -34,9 +34,11 @@ class Tetromino:
     def get_coords(self):
         return (self.x, self.y)
 
-    def get_right_padding(self):
+    def set_shape_type(self, shape_type: constants.ShapeType):
+        self.shape_type = shape_type
 
-        pass
+    def set_color_type(self, color_type: constants.ColorType):
+        self.color_type = color_type
 
     def get_left_padding(self):
 
