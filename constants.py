@@ -19,12 +19,12 @@ TICK_RATE = 1.0 / TPS
 # --- Input ---
 MATRIX_PORTAL_LIS3DH_ADDRESS = 0x19
 TAP_THRESHOLD = 100
-SHAKE_THRESHOLD = 12
-TAP_DELAY = 0.00  # the time in seconds before another tap (rotate) can occur
+SHAKE_THRESHOLD = 25
+TAP_COOLDOWN = 0.1  # the time in seconds before another tap (rotate) can occur
 
 # --- Tetromino Physics ---
-INITIAL_FALL_RATE = 0.05  # the seconds it takes for the tetromino to fall 1 px.
-FALL_RATE_DECREMENTATION_RATE = 0.05  # removes this value from the fall_rate when Tetromino calls decrement_fall_rate()
+INITIAL_FALL_RATE = 0.15  # the seconds it takes for the tetromino to fall 1 px.
+FALL_RATE_DECREMENTATION_RATE = 0.025  # removes this value from the fall_rate when Tetromino calls decrement_fall_rate()
 TETROMINO_FALLEN_NEXT_LEVEL = 10  # requires 10 tetrominos to fall to speed up
 
 TILT_THRESHOLD_SMALL_RIGHT = 15.0  # the tilt (in degrees) it takes to move the tetromino rightslowly
@@ -103,7 +103,7 @@ COLOR_TYPE_POPULATION_WEIGHTED = [
     ColorType.WHITE
 ]
 
-NEXT_COLOR_CHANCE = 0.5
+NEXT_COLOR_CHANCE = 0.65
 
 # The corresponding weights for the color
 COLOR_WEIGHTS = [

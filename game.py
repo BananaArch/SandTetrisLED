@@ -1,5 +1,6 @@
 # game.py
 
+from inputs_manager import InputsManager
 from graphics_manager import GraphicsManager
 from tetromino_view import TetrominoView
 from sand_pile_view import SandPileView
@@ -7,10 +8,6 @@ from tetromino import Tetromino
 from sand_pile import SandPile
 import constants
 
-import adafruit_lis3dh
-import board
-import busio
-import math
 import time
 import random
 
@@ -29,13 +26,8 @@ class Game:
             and the Active Tetromino.
         """
 
-        # --- Initialize hardware ---
-        i2c = busio.I2C(board.SCL, board.SDA)  # Setup I2C for the accelerometer
-        self.lis3dh = adafruit_lis3dh.LIS3DH_I2C(i2c, address=constants.MATRIX_PORTAL_LIS3DH_ADDRESS)  # Creates accelerometer object
-        self.lis3dh.range = adafruit_lis3dh.RANGE_2_G  # Sets a range of 2G for sensitivity
-        self.lis3dh.set_tap(1, constants.TAP_THRESHOLD) # 1 sets single tap
-
-        self.last_accel_x, self.last_accel_y, self.last_accel_z = self.lis3dh.acceleration
+        # --- Create our InputsManager sub-controller class/object ---
+        self.inputs_manager = InputsManager()
 
         # --- Create our view classes/objects ---
         self.graphics_manager = GraphicsManager()
@@ -60,10 +52,15 @@ class Game:
         # -- Create variables related with the game-loop
         self.last_frame_time = time.monotonic()
         self.is_game_over = False
+        self.time_since_tapped = 0.0
 
         self.num_tetrominoes_dropped = 0
 
+
+
     # --- Methods ---
+
+
 
     def _get_random_shape(self):
         return random.choice(constants.SHAPE_TYPE_POPULATION)
@@ -71,55 +68,7 @@ class Game:
     def _get_random_color(self):
         return random.choice(constants.COLOR_TYPE_POPULATION_WEIGHTED)
 
-    def _get_all_inputs(self):
-        """
-        Gathers all player inputs from the accelerometer for the current frame.
 
-        Returns:
-            dict: A dictionary containing the state of all inputs, e.g.,
-                  {'shaken': bool, 'tapped': bool, 'tilt_angle': float}
-        """
-        was_tapped = False # Default value
-        was_shaken = False # Default value
-
-        try:
-            # Get the current raw acceleration values
-            ax, ay, az = self.lis3dh.acceleration
-
-            # --- NEW: Non-Blocking Shake Detection ---
-            # Calculate the change (delta) in acceleration since the last frame
-            delta_x = ax - self.last_accel_x
-            delta_y = ay - self.last_accel_y
-            delta_z = az - self.last_accel_z
-
-            # Update the stored values for the next frame
-            self.last_accel_x, self.last_accel_y, self.last_accel_z = ax, ay, az
-
-            # Calculate the magnitude of the change. This is the "jerk".
-            jerk_magnitude = math.sqrt(delta_x**2 + delta_y**2 + delta_z**2)
-
-            # Compare the jerk to a threshold. You will need to tune this value
-            # in your constants.py file. Start with a value around 25-30.
-            if jerk_magnitude > constants.SHAKE_THRESHOLD:
-                was_shaken = True
-
-            # --- Tap Detection ---
-            was_tapped = self.lis3dh.tapped
-
-            # --- Tilt Angle ---
-            angle_rad = math.atan2(-ay, ax)
-            angle_deg = math.degrees(angle_rad)
-
-        except OSError:
-            # If I2C fails, return neutral inputs
-            return {"shaken": False, "tapped": False, "tilt_angle": 0.0}
-
-        # Return all inputs in a clean dictionary
-        return {
-            "shaken": was_shaken,
-            "tapped": was_tapped,
-            "tilt_angle": angle_deg
-        }
 
     def _is_tetromino_collision(self, proposed_x: int, proposed_y: int):
         """
@@ -207,8 +156,9 @@ class Game:
 
     def _update_all_models(self, dt: float, inputs):
 
-        if inputs["tapped"]:
+        if inputs["tapped"] and self.time_since_tapped > constants.TAP_COOLDOWN:
             self._handle_rotations()
+            self.time_since_tapped = 0.0
 
         old_x = self.active_tetromino.x
         old_y = self.active_tetromino.y
@@ -220,14 +170,12 @@ class Game:
 
         if colliding:
 
-            new_y = 0
-            new_x = constants.TETROMINO_START_X
-
             self.sand_pile.convert_tetromino_to_sand(self.active_tetromino, self.graphics_manager.sprite_sheet_bitmap)
-            self.active_tetromino.decrement_fall_rate()
 
-            self.active_tetromino.set_shape_type(self.next_shape)
-            self.active_tetromino.set_color_type(self.next_color)
+            if (self.num_tetrominoes_dropped != 0 and self.num_tetrominoes_dropped % constants.TETROMINO_FALLEN_NEXT_LEVEL == 0):
+                self.active_tetromino.decrement_fall_rate()
+
+            self.active_tetromino.reset(self.next_shape, self.next_color)
 
             self.next_shape = self._get_random_shape()
 
@@ -235,6 +183,7 @@ class Game:
                 self.next_color = self._get_random_color()
 
             self.num_tetrominoes_dropped += 1
+            return
 
         elif hits_wall:
             new_x = old_x
@@ -259,9 +208,11 @@ class Game:
             dt = start_frame_time - self.last_frame_time
             self.last_frame_time = start_frame_time
 
-            inputs = self._get_all_inputs()
+            inputs = self.inputs_manager.get_all_inputs()
             self._update_all_models(dt, inputs)
             self._update_all_views()
+
+            self.time_since_tapped += dt
 
             frame_time = time.monotonic() - start_frame_time
             sleep_time = constants.TICK_RATE - frame_time
