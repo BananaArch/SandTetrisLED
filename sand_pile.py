@@ -31,6 +31,15 @@ class SandPile:
         self.sand_state_bitmap = sand_bitmap
         pass
 
+    def contains_sand_at(self, x: int, y: int):
+
+        # Check if out of bounds
+        if (x < 0 or x >= constants.GAME_WIDTH) or (y < 0 or y >= constants.PLAYFIELD_HEIGHT):
+            return False
+
+        # Return if that pixel position is not a 0, which is our transparent index
+        return self.sand_state_bitmap[x, y] != 0
+
     def convert_tetromino_to_sand(self, tetromino: Tetromino, sprite_sheet_bitmap: displayio.Bitmap):
         """
         Converts the given Tetromino to sand. This method has access to sprite_sheet_bitmap (a view) because it's a
@@ -49,49 +58,50 @@ class SandPile:
         # Loop through each of the 16 slots in the 4x4 shape data grid.
         # `i` will be the index from 0-15.
         # `tile_col_index` is the value from the bytearray (the sprite's column).
-        for i, tile_col_index in enumerate(shape_data):
+        for index, tile_col_index in enumerate(shape_data):
 
-            # If the index is 0, it's an empty part of the shape, so we skip it.
-            if tile_col_index != 0:
+            # If the value is 0, it's an empty part of the shape, so we skip it.
+            if tile_col_index == 0:
+                continue
 
-                # --- Step 1: Calculate the destination position ---
-                # First, find the logical (x,y) of this mino within the 4x4 piece grid.
-                mino_grid_x = i % constants.TETROMINO_SHAPE_DATA_SIZE
-                mino_grid_y = i // constants.TETROMINO_SHAPE_DATA_SIZE
+            # --- Step 1: Calculate the destination position ---
+            # First, find the logical (x,y) of this mino within the 4x4 piece grid.
+            mino_grid_x = index % constants.TETROMINO_SHAPE_DATA_SIZE
+            mino_grid_y = index // constants.TETROMINO_SHAPE_DATA_SIZE
 
-                # Now, find the top-left *pixel* coordinate where this mino should be stamped
-                # onto the sand bitmap.
-                dest_start_x = tetromino.x + mino_grid_x * constants.MINO_SIZE
-                dest_start_y = tetromino.y + mino_grid_y * constants.MINO_SIZE
+            # Now, find the top-left *pixel* coordinate where this mino should be stamped
+            # onto the sand bitmap.
+            dest_start_x = tetromino.x + mino_grid_x * constants.MINO_SIZE
+            dest_start_y = tetromino.y + mino_grid_y * constants.MINO_SIZE
 
-                # --- Step 2: Calculate the source position ---
-                # Find the top-left *pixel* coordinate of the source sprite on the sprite sheet.
-                source_start_x = tile_col_index * constants.MINO_SIZE
-                source_start_y = tetromino.color_type * constants.MINO_SIZE
+            # --- Step 2: Calculate the source position ---
+            # Find the top-left *pixel* coordinate of the source sprite on the sprite sheet.
+            source_start_x = tile_col_index * constants.MINO_SIZE
+            source_start_y = tetromino.color_type * constants.MINO_SIZE
 
-                # --- Step 3: Copy the 3x3 pixels ---
-                # Now we loop 3x3 times to copy the mino's pixels.
+            # --- Step 3: Copy the 3x3 pixels ---
+            # Now we loop 3x3 times to copy the mino's pixels.
+            for x_offset in range(constants.MINO_SIZE):
                 for y_offset in range(constants.MINO_SIZE):
-                    for x_offset in range(constants.MINO_SIZE):
 
-                        # Calculate the final source pixel to read from
-                        source_x = source_start_x + x_offset
-                        source_y = source_start_y + y_offset
+                    # Calculate the final source pixel to read from
+                    source_x = source_start_x + x_offset
+                    source_y = source_start_y + y_offset
 
-                        # Calculate the final destination pixel to write to
-                        dest_x = dest_start_x + x_offset
-                        dest_y = dest_start_y + y_offset - constants.INFO_BAR_HEIGHT
-                        # the INFO_BAR_HEIGHT accounts for the fact that the playfield area is 5 px below y=0
+                    # Calculate the final destination pixel to write to
+                    dest_x = dest_start_x + x_offset
+                    dest_y = dest_start_y + y_offset - constants.INFO_BAR_HEIGHT
+                    # the INFO_BAR_HEIGHT accounts for the fact that the playfield area is 5 px below y=0
 
-                        # Safety check to ensure we don't write out of bounds
-                        if (0 <= dest_x < self.sand_state_bitmap.width and
-                            0 <= dest_y < self.sand_state_bitmap.height):
+                    # Safety check to ensure we don't write out of bounds
+                    if (0 <= dest_x < self.sand_state_bitmap.width and
+                        0 <= dest_y < self.sand_state_bitmap.height):
 
-                            # Copy the pixel's index value from the sprite sheet
-                            # to the sand pile's state bitmap.
-                            pixel_value = sprite_sheet_bitmap[source_x, source_y]
+                        # Copy the pixel's index value from the sprite sheet
+                        # to the sand pile's state bitmap.
+                        pixel_value = sprite_sheet_bitmap[source_x, source_y]
 
-                            self.sand_state_bitmap[dest_x, dest_y] = pixel_value
+                        self.sand_state_bitmap[dest_x, dest_y] = pixel_value
 
     def apply_sand_physics(self):
         """

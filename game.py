@@ -77,6 +77,7 @@ class Game:
 
         Checks whether the active Tetromino at the proposed new position would collide
         with the ground or existing sand. This does not check if it hits the wall.
+        The _tetromino_hits_wall method deals witht his.
 
         Args:
             proposed_x (int): The proposed new x-coordinate for the active tetromino.
@@ -93,7 +94,30 @@ class Game:
         if bottom_edge_position >= constants.GAME_HEIGHT:
             return True
 
-        # TODO: Check sand collision here
+        # iterate through 4x4 grid of minos
+
+        shape_data = self.active_tetromino.get_shape_data()
+
+        for index, mino_value in enumerate(shape_data):
+
+            if mino_value == 0:  # there is no mino there
+                continue  # we skip it
+
+            shape_x = index % constants.TETROMINO_SHAPE_DATA_SIZE  # gets the 2D x coordinate of the 1D shape_data
+            shape_y = index // constants.TETROMINO_SHAPE_DATA_SIZE  # gets the 2D y coordinate of the 1D shape_data
+
+            # if there is a mino there, iterate through all pixels of that mino
+            for x_offset in range(constants.MINO_SIZE):
+                for y_offset in range(constants.MINO_SIZE):
+
+                    absolute_pixel_x = proposed_x + shape_x * constants.MINO_SIZE + x_offset
+                    absolute_pixel_y = proposed_y + shape_y * constants.MINO_SIZE + y_offset
+
+                    sand_bitmap_x = absolute_pixel_x
+                    sand_bitmap_y = absolute_pixel_y - constants.INFO_BAR_HEIGHT
+
+                    if (self.sand_pile.contains_sand_at(sand_bitmap_x, sand_bitmap_y)):
+                        return True
 
         return False
 

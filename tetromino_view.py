@@ -69,6 +69,7 @@ class TetrominoView:
             row_index = active_tetromino_color_type
             sprite_index = col_index + row_index * constants.NUM_SPRITES_PER_COLOR
             self.tetromino_tile_grid[i] = sprite_index
+
             # Creates the tetromino tile grid by parsing and patching the bitmap.
             # It takes the tile from the bitmap that aligns
             #       with color_type (row) and shape_data (col),

@@ -38,6 +38,8 @@ class SandPileView:
             len(self.sand_palette),  # value_count
         )
 
+        self.sand_state_bitmap.fill(0)
+
         self._sand_tile_grid = displayio.TileGrid(
             bitmap=self.sand_state_bitmap,
             pixel_shader=self.sand_palette,
@@ -49,16 +51,6 @@ class SandPileView:
             y=constants.INFO_BAR_HEIGHT,
         )
 
-        root_group.append(self._sand_tile_grid)
+        root_group.insert(0, self._sand_tile_grid)
         # No dedicated sand_group needed, as the sand_tilegrid is a single visual object that never moves.
 
-    def update(self):
-
-        """
-        The main public method. Updates the view to match the model.
-
-        Args:
-
-        """
-
-        pass
