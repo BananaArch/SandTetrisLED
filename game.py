@@ -116,7 +116,7 @@ class Game:
                     sand_bitmap_x = absolute_pixel_x
                     sand_bitmap_y = absolute_pixel_y - constants.INFO_BAR_HEIGHT
 
-                    if (self.sand_pile.contains_sand_at(sand_bitmap_x, sand_bitmap_y)):
+                    if (not self.sand_pile.is_empty_at((sand_bitmap_x, sand_bitmap_y))):
                         return True
 
         return False
@@ -180,6 +180,8 @@ class Game:
 
     def _update_all_models(self, dt: float, inputs):
 
+        # --- Tetromino Updates ---
+
         if inputs["tapped"] and self.time_since_tapped > constants.TAP_COOLDOWN:
             self._handle_rotations()
             self.time_since_tapped = 0.0
@@ -214,6 +216,10 @@ class Game:
 
         self.active_tetromino.execute_approved_move(new_x, new_y)
 
+        # --- SandPile Update ---
+
+        self.sand_pile.update()
+
     def _update_all_views(self):
         self.graphics_manager.begin_frame()
 
@@ -244,5 +250,6 @@ class Game:
             if sleep_time > 0:
                 time.sleep(sleep_time)
 
+            print(sleep_time)
         while True:
             pass

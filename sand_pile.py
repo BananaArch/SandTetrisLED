@@ -1,6 +1,7 @@
 # sand_pile.py
 
 import displayio
+import random
 
 from tetromino import Tetromino
 import constants
@@ -29,16 +30,41 @@ class SandPile:
         """
 
         self.sand_state_bitmap = sand_bitmap
-        pass
 
-    def contains_sand_at(self, x: int, y: int):
+    def _coord_within_bounds(self, coord: Tuple[int, int]):
+        x, y = coord
 
-        # Check if out of bounds
-        if (x < 0 or x >= constants.GAME_WIDTH) or (y < 0 or y >= constants.PLAYFIELD_HEIGHT):
-            return False
+        x_in_bounds = (0 <= x < constants.GAME_WIDTH)
+        y_in_bounds = (0 <= y < constants.PLAYFIELD_HEIGHT)
 
-        # Return if that pixel position is not a 0, which is our transparent index
-        return self.sand_state_bitmap[x, y] != 0
+        return x_in_bounds and y_in_bounds
+
+    def is_empty_at(self, coord: Tuple[int, int]):
+        """
+        Returns whether (x, y) is empty
+
+        If it's out-of-bounds, we return True
+        """
+
+        if (not self._coord_within_bounds(coord)):  # if out of bounds, we say it is empty
+            return True
+
+        x, y = coord
+
+        # Returns if pixel position is 0, which is our transparent index
+        return self.sand_state_bitmap[x, y] == 0
+
+
+    def _swap(self, coord1: Tuple[int, int], coord2: Tuple[int, int]):
+        first_x, first_y = coord1
+        second_x, second_y = coord2
+
+        if(not self._coord_within_bounds(coord1) or not self._coord_within_bounds(coord2)):
+            raise IndexError
+
+        temp = self.sand_state_bitmap[first_x, first_y]
+        self.sand_state_bitmap[first_x, first_y] = self.sand_state_bitmap[second_x, second_y]
+        self.sand_state_bitmap[second_x, second_y] = temp
 
     def convert_tetromino_to_sand(self, tetromino: Tetromino, sprite_sheet_bitmap: displayio.Bitmap):
         """
@@ -106,15 +132,59 @@ class SandPile:
     def apply_sand_physics(self):
         """
         Iterates through the SandPile and makes any unsupported sand pixels fall down.
+        This version is optimized for performance and more natural-looking physics.
+        This method currently takes the majority (80%) of the runtime of each tick, and
+        it's really slow. We will have to optimize this later.
         """
 
-        pass
+        grid = self.sand_state_bitmap
+        grid_width = constants.GAME_WIDTH
+        grid_height = constants.PLAYFIELD_HEIGHT
 
-    def find_and_clear_lines(self):
+        # Loop from the bottom-up, as before.
+        for y in range(grid_height - 2, -1, -1):
+
+            for x in range(grid_width):
+
+                # If the current pixel is empty, we do not need to do sand physics
+                if grid[x, y] == 0:
+                    continue
+
+                # Check if the pixel directly below is empty. If so, we move it down.
+                if grid[x, y + 1] == 0:
+                    grid[x, y + 1] = grid[x, y]
+                    grid[x, y] = 0
+                    continue
+
+                # If straight down is blocked, check the two diagonals.
+
+                if random.random() < 0.5:
+                    # Try right diagonal first, with boundary check
+                    if x + 1 < grid_width and grid[x + 1, y + 1] == 0:
+                        grid[x + 1, y + 1] = grid[x, y]
+                        grid[x, y] = 0
+                    # Then try left diagonal, with boundary check
+                    elif x - 1 >= 0 and grid[x - 1, y + 1] == 0:
+                        grid[x - 1, y + 1] = grid[x, y]
+                        grid[x, y] = 0
+                else:
+                    # Try left diagonal first
+                    if x - 1 >= 0 and grid[x - 1, y + 1] == 0:
+                        grid[x - 1, y + 1] = grid[x, y]
+                        grid[x, y] = 0
+                    # Then try right diagonal
+                    elif x + 1 < grid_width and grid[x + 1, y + 1] == 0:
+                        grid[x + 1, y + 1] = grid[x, y]
+                        grid[x, y] = 0
+
+    def find_and_cler_lines(self):
         """
         Finds any continuous paths of same-colored sand from left to right.
         If found, clears them and returns the number of points scored.
         Returns the number of cleared sand pixels.
         """
         pass
+
+    def update(self):
+        self.apply_sand_physics()
 
