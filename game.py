@@ -198,6 +198,15 @@ class Game:
 
             self.sand_pile.convert_tetromino_to_sand(self.active_tetromino, self.graphics_manager.sprite_sheet_bitmap)
 
+            tetromino_px_size = constants.TETROMINO_SHAPE_DATA_SIZE * constants.MINO_SIZE
+            self.sand_pile.dirty_the_area(
+                self.active_tetromino.x,
+                self.active_tetromino.y - constants.INFO_BAR_HEIGHT,
+                # We must make sure to convert from actual px to grid px
+                tetromino_px_size,
+                tetromino_px_size
+            )
+
             if (self.num_tetrominoes_dropped != 0 and self.num_tetrominoes_dropped % constants.TETROMINO_FALLEN_NEXT_LEVEL == 0):
                 self.active_tetromino.decrement_fall_rate()
 

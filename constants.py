@@ -23,7 +23,7 @@ SHAKE_THRESHOLD = 25
 TAP_COOLDOWN = 0.1  # the time in seconds before another tap (rotate) can occur
 
 # --- Tetromino Physics ---
-INITIAL_FALL_RATE = 0.15  # the seconds it takes for the tetromino to fall 1 px.
+INITIAL_FALL_RATE = 0.15  # TODO: change this to 0.15  # the seconds it takes for the tetromino to fall 1 px.
 FALL_RATE_DECREMENTATION_RATE = 0.025  # removes this value from the fall_rate when Tetromino calls decrement_fall_rate()
 TETROMINO_FALLEN_NEXT_LEVEL = 10  # requires 10 tetrominos to fall to speed up
 
@@ -32,7 +32,7 @@ TILT_THRESHOLD_SMALL_LEFT = -15.0  # the tilt (in degrees) it takes to move the 
 
 # --- Tetromino Dimensions ---
 
-# The side (in minos) of the logical grid used to store the shape data for
+# The size (in minos) of the logical grid used to store the shape data for
 # every tetromino piece. Since all standard tetrominos fit within a 4x4 area,
 # this value is 4. It's used to translate 2D coordinates into a 1D index
 # and vice versa for the SHAPE_DATA (bytes) shown below.
