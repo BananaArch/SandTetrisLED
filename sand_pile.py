@@ -31,9 +31,15 @@ class SandPile:
         """
 
         self.sand_state_bitmap = sand_bitmap
-        # A set to hold the (x, y) coordinates of every active sand pixel.
-        # These pixels is used by the sand physics method.
-        self.active_pixels = set()
+        # A list of sets. Each index in the list corresponds to a Y-row.
+        # The set at that index contains all active X-coordinates for that row.
+        self.active_rows = [set() for _ in range(constants.PLAYFIELD_HEIGHT)]
+
+    def _activate_pixel(self, coord: Tuple[int, int]):
+        """A helper method to add a pixel to the active list, with boundary checks."""
+        x, y = coord
+        if 0 <= y < constants.PLAYFIELD_HEIGHT and 0 <= x < constants.GAME_WIDTH:
+            self.active_rows[y].add(x)
 
     def _coord_within_bounds(self, coord: Tuple[int, int]):
         x, y = coord
@@ -131,7 +137,7 @@ class SandPile:
                         pixel_value = sprite_sheet_bitmap[source_x, source_y]
 
                         self.sand_state_bitmap[dest_x, dest_y] = pixel_value
-                        self.active_pixels.add((dest_x, dest_y))
+                        self._activate_pixel( (dest_x, dest_y) )
 
     def apply_sand_physics(self):
         """
@@ -141,8 +147,10 @@ class SandPile:
         it's really slow. We will have to optimize this later.
         """
 
-        if not self.active_pixels:
+        has_any_active_pixels = any(self.active_rows)
+        if not has_any_active_pixels:
             return
+
 
         start_time = time.monotonic()
 
@@ -150,80 +158,68 @@ class SandPile:
         grid_width = constants.GAME_WIDTH
         grid_height = constants.PLAYFIELD_HEIGHT
 
-        next_active_pixels = set()
+        for y in range(grid_height - 1, -1, -1):
 
-        sorted_active_pixels = list(self.active_pixels)
-        sorted_active_pixels.sort(key=lambda coord: coord[1], reverse = True)
-
-        pixels_to_process = sorted_active_pixels[:constants.MAX_PIXELS_TO_PROCESS_PER_FRAME]
-
-        for pixel in pixels_to_process:
-
-            x, y = pixel
-
-            # Check for bounds. We do not use self._coord_within_bounds() for performance.
-            # We also make sure it excludes the bottom row. We need to do this, because
-            # the code checks and manipulates the row below the current y value.
-
-            if (not (0 <= x < grid_width and 0 <= y < grid_height)):
+            # If the row has no active pixels, we skip that row
+            if not self.active_rows[y]:
                 continue
 
-            # Check if there is no sand at that pixel, if so, we skip this pixel.
-            if (grid[x, y] == 0):
-                continue
+            # Iterate through all x values in the row
+            for x in list(self.active_rows[y]):
+                # Check for bounds. We do not use self._coord_within_bounds() for performance.
+                # We also make sure it excludes the bottom row. We need to do this, because
+                # the code checks and manipulates the row below the current y value.
 
-            # --- PHYSICS LOGIC ---
+                if (not (0 <= x < grid_width and 0 <= y < grid_height)):
+                    continue
 
-            moved = False  # Whether or not the pixel moves
-            new_pos = None  # The new position that the pixel moves to (if it moves)
+                # Check if there is no sand at that pixel, if so, we skip this pixel.
+                if (grid[x, y] == 0):
+                    continue
 
-            # STEP 1) CHECK IF THE PIXEL CAN GO DOWN
+                # --- PHYSICS LOGIC ---
 
-            if y + 1 < grid_height and grid[x, y + 1] == 0:
-                new_pos = (x, y + 1)
-                moved = True
+                new_pos = None  # The new position that the pixel moves to (if it moves)
 
-            # STEP 2) IF THAT DOESN'T WORK, CHECK IF THE PIXEL CAN GO DIAGONALLY
-            #         DOWN TO ENSURE RANDOMNESS, IT WILL RANDOMLY CHOOSE
-            #         DIRECTION (LEFT OR RIGHT) IT WILL TRY TO GO DOWN FIRST.
+                # STEP 1) CHECK IF THE PIXEL CAN GO DOWN
 
-            else:
-                direction = 1 if random.getrandbits(1) else -1
+                if y + 1 < grid_height and grid[x, y + 1] == 0:
+                    new_pos = (x, y + 1)
 
-                # CHECK THE BOUNDARIES OF THE DIAGONAL IN THE RANDOM DIRECTION. ALSO CHECK IF DIAGONAL IS EMPTY.
-                if (0 <= (x + direction) < grid_width and 0 <= y + 1 < grid_height) and (grid[x + direction, y + 1] == 0):
-                    # IF IT IS, THEY SWAP
-                    new_pos = (x + direction, y + 1)
-                    moved = True
+                # STEP 2) IF THAT DOESN'T WORK, CHECK IF THE PIXEL CAN GO DIAGONALLY
+                #         DOWN TO ENSURE RANDOMNESS, IT WILL RANDOMLY CHOOSE
+                #         DIRECTION (LEFT OR RIGHT) IT WILL TRY TO GO DOWN FIRST.
 
-                # IF THE FIRST DIAGONAL FAILS, CHECK THE OTHER DIAGONAL.
-                elif (0 <= (x - direction) < grid_width and 0 <= y + 1 < grid_height) and (grid[x - direction, y + 1] == 0):
-                    new_pos = (x - direction, y + 1)
-                    moved = True
+                else:
+                    direction = 1 if random.getrandbits(1) else -1
 
-            # UPDATE THE GRID AND WAKE UP NEIGHBORS
-            if moved:
+                    # CHECK THE BOUNDARIES OF THE DIAGONAL IN THE RANDOM DIRECTION. ALSO CHECK IF DIAGONAL IS EMPTY.
+                    if (0 <= (x + direction) < grid_width and 0 <= y + 1 < grid_height) and (grid[x + direction, y + 1] == 0):
+                        # IF IT IS, THEY SWAP
+                        new_pos = (x + direction, y + 1)
 
-                # Actually move the pixel
-                grid[new_pos[0], new_pos[1]] = grid[x, y]
-                grid[x, y] = 0
+                    # IF THE FIRST DIAGONAL FAILS, CHECK THE OTHER DIAGONAL.
+                    elif (0 <= (x - direction) < grid_width and 0 <= y + 1 < grid_height) and (grid[x - direction, y + 1] == 0):
+                        new_pos = (x - direction, y + 1)
 
-                # The pixel moved, leaving a hole. The pixels above it might now be unstable.
-                # We must add them to the active set for the next frame so they get checked.
-                next_active_pixels.add((x, y - 1))     # Above
-                next_active_pixels.add((x - 1, y - 1)) # Above-left
-                next_active_pixels.add((x + 1, y - 1)) # Above-right
+                # UPDATE THE GRID AND WAKE UP NEIGHBORS
+                if new_pos is not None:
 
-                # We also need to add the new_pos, as it might fall again.
-                next_active_pixels.add(new_pos)
+                    # Actually move the pixel
+                    grid[new_pos[0], new_pos[1]] = grid[x, y]
+                    grid[x, y] = 0
 
-        # Remove the pixels we just processed from the main set.
-        processed_pixels = set(pixels_to_process)
-        self.active_pixels.difference_update(processed_pixels)
+                    # The pixel moved, leaving a hole. The pixels above it might now be unstable.
+                    # We must add them to the active set for the next frame so they get checked.
+                    self._activate_pixel((x, y - 1))     # Above
+                    self._activate_pixel((x - 1, y - 1)) # Above-left
+                    self._activate_pixel((x + 1, y - 1)) # Above-right
 
-        # Add in newly-activated pixels
+                    # We also need to add the new_pos, as it might fall again.
+                    self._activate_pixel(new_pos)
 
-        self.active_pixels.update(next_active_pixels)
+
+            self.active_rows[y].clear()
 
         end_time = time.monotonic()
 

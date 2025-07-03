@@ -22,12 +22,6 @@ TAP_THRESHOLD = 100
 SHAKE_THRESHOLD = 25
 TAP_COOLDOWN = 0.1  # the time in seconds before another tap (rotate) can occur
 
-# --- Sand Physics ---
-
-# Maximum amount of pixels to process during a frame.
-# This speeds up the program.
-MAX_PIXELS_TO_PROCESS_PER_FRAME = 100
-
 # --- Tetromino Physics ---
 INITIAL_FALL_RATE = 0.05  # the seconds it takes for the tetromino to fall 1 px. Default: 0.15
 FALL_RATE_DECREMENTATION_RATE = 0.025  # removes this value from the fall_rate when Tetromino calls decrement_fall_rate()
