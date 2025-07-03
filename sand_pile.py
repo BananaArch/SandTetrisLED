@@ -75,7 +75,7 @@ class SandPile:
         self.sand_state_bitmap[first_x, first_y] = self.sand_state_bitmap[second_x, second_y]
         self.sand_state_bitmap[second_x, second_y] = temp
 
-    def convert_tetromino_to_sand(self, tetromino: Tetromino, sprite_sheet_bitmap: displayio.Bitmap):
+    def transform_and_activate_tetromino_to_sand(self, tetromino: Tetromino, sprite_sheet_bitmap: displayio.Bitmap):
         """
         Converts the given Tetromino to sand. This method has access to sprite_sheet_bitmap (a view) because it's a
         pragmatic decision based on the fact that our main 2D array is a bitmap (view).
@@ -137,14 +137,13 @@ class SandPile:
                         pixel_value = sprite_sheet_bitmap[source_x, source_y]
 
                         self.sand_state_bitmap[dest_x, dest_y] = pixel_value
-                        self._activate_pixel( (dest_x, dest_y) )
+                        self._activate_pixel((dest_x, dest_y))
 
     def apply_sand_physics(self):
         """
         Iterates through the SandPile and makes any unsupported sand pixels fall down.
         This version is optimized for performance and more natural-looking physics.
-        This method sometimes takes the majority (80%) of the runtime of each tick.
-        It is not perfect and there is an peeling issue with a "race condition"
+        It is not perfect and there may be a peeling issue with a "race condition"
         due to the nature of the cellular automata simulation.
         """
 
@@ -160,7 +159,7 @@ class SandPile:
         grid_height = constants.PLAYFIELD_HEIGHT
 
         # Stores active pixels for next simulation
-        next_active_rows = [set() for _ in range(grid_height)]
+        dormant_rows = [set() for _ in range(grid_height)]
 
         for y in range(grid_height - 1, -1, -1):
 
@@ -201,10 +200,15 @@ class SandPile:
                     if (0 <= (x + direction) < grid_width and 0 <= y + 1 < grid_height) and (grid[x + direction, y + 1] == 0):
                         # IF IT IS, THEY SWAP
                         new_pos = (x + direction, y + 1)
-
                     # IF THE FIRST DIAGONAL FAILS, CHECK THE OTHER DIAGONAL.
                     elif (0 <= (x - direction) < grid_width and 0 <= y + 1 < grid_height) and (grid[x - direction, y + 1] == 0):
                         new_pos = (x - direction, y + 1)
+                    elif (0 <= (x + 2 * direction) < grid_width and 0 <= y + 1 < grid_height) and (grid[x + 2 * direction, y + 1] == 0):
+                        # IF IT IS, THEY SWAP
+                        new_pos = (x + 2 * direction, y + 1)
+                    # IF THE FIRST DIAGONAL FAILS, CHECK THE OTHER DIAGONAL.
+                    elif (0 <= (x - 2 * direction) < grid_width and 0 <= y + 1 < grid_height) and (grid[x - 2 * direction, y + 1] == 0):
+                        new_pos = (x - 2 * direction, y + 1)
 
                 # UPDATE THE GRID AND WAKE UP NEIGHBORS
                 if new_pos is not None:
@@ -217,15 +221,15 @@ class SandPile:
                     # We must add them to the active set for the next frame so they get checked.
 
                     if y - 1 >= 0:
-                        next_active_rows[y-1].add(x)  # Above
-                        if x - 1 >= 0: next_active_rows[y-1].add(x-1)  # Above-Left
-                        if x + 1 < grid_width: next_active_rows[y-1].add(x+1)  # Above-Right
+                        dormant_rows[y-1].add(x)  # Above
+                        if x - 1 >= 0: dormant_rows[y-1].add(x-1)  # Above-Left
+                        if x + 1 < grid_width: dormant_rows[y-1].add(x+1)  # Above-Right
 
                     # We also need to add the new_pos, as it might fall again.
-                    next_active_rows[new_pos[1]].add(new_pos[0])
+                    dormant_rows[new_pos[1]].add(new_pos[0])
 
 
-        self.active_rows = next_active_rows
+        self.active_rows = dormant_rows
 
         end_time = time.monotonic()
 
@@ -243,5 +247,4 @@ class SandPile:
 
     def update(self):
         self.apply_sand_physics()
-
 

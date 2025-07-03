@@ -22,6 +22,14 @@ TAP_THRESHOLD = 100
 SHAKE_THRESHOLD = 25
 TAP_COOLDOWN = 0.1  # the time in seconds before another tap (rotate) can occur
 
+# --- Sand Physics ---
+
+# Without the slow multiplier, the sand physics is too fast
+# and is not as fun to play with since it's not part of the environment.
+# The sand multiplier slows the sand physics down by the below multiple.
+# This number must be an integer.
+SLOW_MULTIPLIER = 2
+
 # --- Tetromino Physics ---
 INITIAL_FALL_RATE = 0.05  # the seconds it takes for the tetromino to fall 1 px. Default: 0.15
 FALL_RATE_DECREMENTATION_RATE = 0.025  # removes this value from the fall_rate when Tetromino calls decrement_fall_rate()
@@ -103,7 +111,7 @@ COLOR_TYPE_POPULATION_WEIGHTED = [
     ColorType.WHITE
 ]
 
-NEXT_COLOR_CHANCE = 0.65
+NEXT_COLOR_CHANCE = 1.0
 
 # The corresponding weights for the color
 COLOR_WEIGHTS = [

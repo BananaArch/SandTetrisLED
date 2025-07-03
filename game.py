@@ -63,8 +63,7 @@ class Game:
 
 
     def _get_random_shape(self):
-        #return random.choice(constants.SHAPE_TYPE_POPULATION)
-        return constants.ShapeType.T
+        return random.choice(constants.SHAPE_TYPE_POPULATION)
 
     def _get_random_color(self):
         return random.choice(constants.COLOR_TYPE_POPULATION_WEIGHTED)
@@ -200,7 +199,7 @@ class Game:
             if self.active_tetromino.y - self.active_tetromino.get_top_padding() < constants.INFO_BAR_HEIGHT:
                 self.is_game_over = True
 
-            self.sand_pile.convert_tetromino_to_sand(self.active_tetromino, self.graphics_manager.sprite_sheet_bitmap)
+            self.sand_pile.transform_and_activate_tetromino_to_sand(self.active_tetromino, self.graphics_manager.sprite_sheet_bitmap)
 
             if (self.num_tetrominoes_dropped != 0 and self.num_tetrominoes_dropped % constants.TETROMINO_FALLEN_NEXT_LEVEL == 0):
                 self.active_tetromino.decrement_fall_rate()
@@ -256,6 +255,7 @@ class Game:
                 time.sleep(sleep_time)
 
             #print(sleep_time)
+
         while True:
             print("GAME OVER")
             time.sleep(60)
