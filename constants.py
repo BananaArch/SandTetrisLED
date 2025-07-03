@@ -25,7 +25,11 @@ TAP_COOLDOWN = 0.1  # the time in seconds before another tap (rotate) can occur
 # --- Sand Physics ---
 
 # Only merge if the new area of dirty rectangle is less than 2x the old areas.
-MERGE_HEURISTIC_FACTOR = 1.5
+MERGE_HEURISTIC_FACTOR = 2
+
+# If dirty_rects has less than this number of rectangles it will try to merge
+# If not, then we will just iterate over the entire grid.
+MERGE_THRESHOLD = 30
 
 
 # --- Tetromino Physics ---

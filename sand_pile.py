@@ -92,9 +92,9 @@ class SandPile:
 
     def _merge_overlapping_rects(self):
 
-        # start_time = time.monotonic()
+        start_time = time.monotonic()
 
-        if (len(self.dirty_rects) == 0):
+        if not self.dirty_rects:
             return
 
         merged_rects = self.dirty_rects.copy()
@@ -142,9 +142,54 @@ class SandPile:
 
         self.dirty_rects = merged_rects
 
-        # end_time = time.monotonic()
+        end_time = time.monotonic()
 
-        # print("Merge Time", end_time - start_time)
+        print("Merge Time", end_time - start_time)
+        if (end_time - start_time >= 0.01):
+            print("%%%%%%%%%%%%%% - SLOW MERGE - %%%%%%%%%%%%%%%")
+
+    def _merge_overlapping_rects_fast(self):
+        """
+        A fast, O(n) algorithm that finds the single bounding box that contains
+        all rectangles in the dirty_rects list. This replaces a complex merge
+        with a simple union, which is much more performant.
+        """
+
+        # If there are no rectangles to process, do nothing.
+        if not self.dirty_rects:
+            return
+
+        # Start by setting the min and max coordinates to the boundaries
+        # of the first rectangle in the list.
+        first_rect = self.dirty_rects[0]
+        min_x, min_y, first_width, first_height = first_rect
+        max_x = min_x + first_width
+        max_y = min_y + first_height
+
+        # Loop from the second rectangle onwards.
+        for i in range(1, len(self.dirty_rects)):
+            rect = self.dirty_rects[i]
+            x, y, width, height = rect
+
+            # Update  the min values by comparing with the current rect's top-left corner.
+            min_x = min(min_x, x)
+            min_y = min(min_y, y)
+
+            # Update the max values by comparing with the current rect's bottom-right corner.
+            max_x = max(max_x, x + width)
+            max_y = max(max_y, y + height)
+
+        # Calculate the width and height of the final bounding box.
+        merged_width = max_x - min_x
+        merged_height = max_y - min_y
+
+        final_merged_rect = (min_x, min_y, merged_width, merged_height)
+
+        # Clear the old list and replace it with the single, new, all-encompassing rectangle.
+        self.dirty_rects.clear()
+        self.dirty_rects.append(final_merged_rect)
+
+    # TODO: Write a fast merge method
 
     def dirty_the_area(self, x: int, y: int, width: int, height: int):
         self.dirty_rects.append((x, y, width, height))
@@ -236,24 +281,40 @@ class SandPile:
 
         start_time = time.monotonic()
 
-        next_dirty_rects = []
-
-        self._merge_overlapping_rects()
-        cur_dirty_rects = self.dirty_rects
-
         grid = self.sand_state_bitmap
         grid_width = constants.GAME_WIDTH
         grid_height = constants.PLAYFIELD_HEIGHT
+        next_dirty_rects = []
 
-        for rect in cur_dirty_rects:
+        # If the dirty_rects list is small enough.
+        # It's worth it to run the merge optimization.
+        # We will process this merged rectangles
+        if len(self.dirty_rects) <= constants.MERGE_THRESHOLD:
+            self._merge_overlapping_rects()
+        else:
+            # If not, we run the fast algorithm
+            # which is faster but less accurate
+            self._merge_overlapping_rects_fast()
+
+        rects_to_process = self.dirty_rects
+
+        for rect in rects_to_process:
 
             rect_x, rect_y, width, height = rect
 
-            # Loop from the bottom-up
-            for y in range(rect_y + height - 1, rect_y - 1, -1):
+            # start from BOTTOM of screen to TOP of screen
+            start_y = min(grid_height - 2, rect_y + height - 1)
+            end_y = max(0, rect_y - 1)
+            y_range = range(start_y, end_y, -1)
 
+            start_x = max(0, rect_x)
+            end_x = min(rect_x + width, grid_width)
+
+            # Loop from the bottom-up
+            for y in y_range:
+
+                x_range = range(start_x, end_x)
                 # Alternate x scanning direction for more random patterns
-                x_range = range(rect_x, rect_x + width)
                 if (random.getrandbits(1)):
                     x_range = reversed(x_range)
 
@@ -302,7 +363,7 @@ class SandPile:
 
         print("Sand Physics Time", end_time - start_time)
         if end_time - start_time >= constants.TICK_RATE:
-            print("Too slow")
+            print(" --------------------------- Too slow --------------------")
 
     def find_and_clear_lines(self):
         """
