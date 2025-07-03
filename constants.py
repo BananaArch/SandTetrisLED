@@ -28,12 +28,12 @@ TAP_COOLDOWN = 0.1  # the time in seconds before another tap (rotate) can occur
 # and is not as fun to play with since it's not part of the environment.
 # The sand multiplier slows the sand physics down by the below multiple.
 # This number must be an integer.
-SLOW_MULTIPLIER = 2
+SLOW_MULTIPLIER = 3
 
 # --- Tetromino Physics ---
-INITIAL_FALL_RATE = 0.05  # the seconds it takes for the tetromino to fall 1 px. Default: 0.15
-FALL_RATE_DECREMENTATION_RATE = 0.025  # removes this value from the fall_rate when Tetromino calls decrement_fall_rate()
-TETROMINO_FALLEN_NEXT_LEVEL = 10  # requires 10 tetrominos to fall to speed up
+INITIAL_FALL_RATE = 0.12 # the seconds it takes for the tetromino to fall 1 px. Default: 0.12
+FALL_RATE_DECREMENTATION_RATE = 0.01  # removes this value from the fall_rate when Tetromino calls decrement_fall_rate()
+TETROMINO_FALLEN_NEXT_LEVEL = 4  # requires 4 tetrominos to fall to speed up
 
 TILT_THRESHOLD_SMALL_RIGHT = 15.0  # the tilt (in degrees) it takes to move the tetromino rightslowly
 TILT_THRESHOLD_SMALL_LEFT = -15.0  # the tilt (in degrees) it takes to move the tetromino left

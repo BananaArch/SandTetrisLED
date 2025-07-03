@@ -55,8 +55,7 @@ class Game:
         self.time_since_tapped = 0.0
 
         self.num_tetrominoes_dropped = 0
-
-
+        self.tick_count = 0
 
     # --- Methods ---
 
@@ -220,8 +219,8 @@ class Game:
         self.active_tetromino.execute_approved_move(new_x, new_y)
 
         # --- SandPile Update ---
-
-        self.sand_pile.update()
+        if (self.tick_count % constants.SLOW_MULTIPLIER == 0):
+            self.sand_pile.apply_sand_physics()
 
     def _update_all_views(self):
         self.graphics_manager.begin_frame()
@@ -251,10 +250,12 @@ class Game:
             frame_time = time.monotonic() - start_frame_time
             sleep_time = constants.TICK_RATE - frame_time
 
+            self.tick_count += 1
+
             if sleep_time > 0:
                 time.sleep(sleep_time)
 
-            #print(sleep_time)
+            print("Tick", self.tick_count, "-", max(constants.TICK_RATE, frame_time), "seconds.")
 
         while True:
             print("GAME OVER")

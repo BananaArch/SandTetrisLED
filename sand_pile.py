@@ -34,6 +34,7 @@ class SandPile:
         # A list of sets. Each index in the list corresponds to a Y-row.
         # The set at that index contains all active X-coordinates for that row.
         self.active_rows = [set() for _ in range(constants.PLAYFIELD_HEIGHT)]
+        self.odd_rows = False
 
     def _activate_pixel(self, coord: Tuple[int, int]):
         """A helper method to add a pixel to the active list, with boundary checks."""
@@ -147,28 +148,41 @@ class SandPile:
         due to the nature of the cellular automata simulation.
         """
 
+        #start_time = time.monotonic()
+
         has_any_active_pixels = any(self.active_rows)
         if not has_any_active_pixels:
             return
 
 
-        start_time = time.monotonic()
+        # To create a more natural, random, less frantic-looking sand cascade, we only
+        # process half of the rows each frame. This slows down the overall simulation
+        # in a visually pleasing way without causing stutter.
+
+        # Flip the boolean to alternate between processing even and odd rows each frame,
+        # creating a "zebra stripe" pattern of updates over time.
+        self.odd_rows = not self.odd_rows
 
         grid = self.sand_state_bitmap
         grid_width = constants.GAME_WIDTH
         grid_height = constants.PLAYFIELD_HEIGHT
 
-        # Stores active pixels for next simulation
-        dormant_rows = [set() for _ in range(grid_height)]
-
-        for y in range(grid_height - 1, -1, -1):
+        # This loop iterates from the bottom-up, but with a step of -2, processing
+        # only every other row. The 'odd_rows' boolean determines whether we start
+        # on an even or odd row, creating the interlaced "zebra" effect. This is an
+        # intentional visual choice to make large cascades look less uniform and more
+        # granular, as it creates temporary "holes" that fill in on the next frame.
+        for y in range(grid_height - 1 - self.odd_rows, -1, -2):
 
             # If the row has no active pixels, we skip that row
             if not self.active_rows[y]:
                 continue
 
             # Iterate through all x values in the row
-            for x in list(self.active_rows[y]):
+            while self.active_rows[y]:
+
+                x = self.active_rows[y].pop()
+
                 # Check for bounds. We do not use self._coord_within_bounds() for performance.
                 # We also make sure it excludes the bottom row. We need to do this, because
                 # the code checks and manipulates the row below the current y value.
@@ -186,14 +200,22 @@ class SandPile:
 
                 # STEP 1) CHECK IF THE PIXEL CAN GO DOWN
 
-                if y + 1 < grid_height and grid[x, y + 1] == 0:
+                if (y + 1 < grid_height and grid[x, y + 1] == 0):
                     new_pos = (x, y + 1)
 
-                # STEP 2) IF THAT DOESN'T WORK, CHECK IF THE PIXEL CAN GO DIAGONALLY
+                # STEP 2) CHECK IF THE PIXEL CAN GO DIAGONALLY
                 #         DOWN TO ENSURE RANDOMNESS, IT WILL RANDOMLY CHOOSE
                 #         DIRECTION (LEFT OR RIGHT) IT WILL TRY TO GO DOWN FIRST.
+                #         IF THE PIXEL BELOW IT HAS NOT BEEN UPDATED, IT WILL NOT
+                #         GO DIAGONALLY, SINCE THAT WOULD MEAN IT WOULD USE A
+                #         "FLOATING PIXEL" AS A PIVOT.
 
                 else:
+                    if (y + 2 < grid_height and grid[x, y+2] == 0):
+                        # This means it's trying to use a "floating" pixel as a pivot
+                        # if that is the case, we don't do anything with this pixel.
+                        continue
+
                     direction = 1 if random.getrandbits(1) else -1
 
                     # CHECK THE BOUNDARIES OF THE DIAGONAL IN THE RANDOM DIRECTION. ALSO CHECK IF DIAGONAL IS EMPTY.
@@ -203,12 +225,7 @@ class SandPile:
                     # IF THE FIRST DIAGONAL FAILS, CHECK THE OTHER DIAGONAL.
                     elif (0 <= (x - direction) < grid_width and 0 <= y + 1 < grid_height) and (grid[x - direction, y + 1] == 0):
                         new_pos = (x - direction, y + 1)
-                    elif (0 <= (x + 2 * direction) < grid_width and 0 <= y + 1 < grid_height) and (grid[x + 2 * direction, y + 1] == 0):
-                        # IF IT IS, THEY SWAP
-                        new_pos = (x + 2 * direction, y + 1)
-                    # IF THE FIRST DIAGONAL FAILS, CHECK THE OTHER DIAGONAL.
-                    elif (0 <= (x - 2 * direction) < grid_width and 0 <= y + 1 < grid_height) and (grid[x - 2 * direction, y + 1] == 0):
-                        new_pos = (x - 2 * direction, y + 1)
+
 
                 # UPDATE THE GRID AND WAKE UP NEIGHBORS
                 if new_pos is not None:
@@ -221,21 +238,18 @@ class SandPile:
                     # We must add them to the active set for the next frame so they get checked.
 
                     if y - 1 >= 0:
-                        dormant_rows[y-1].add(x)  # Above
-                        if x - 1 >= 0: dormant_rows[y-1].add(x-1)  # Above-Left
-                        if x + 1 < grid_width: dormant_rows[y-1].add(x+1)  # Above-Right
+                        self.active_rows[y-1].add(x)  # Above
+                        if x - 1 >= 0: self.active_rows[y-1].add(x-1)  # Above-Left
+                        if x + 1 < grid_width: self.active_rows[y-1].add(x+1)  # Above-Right
 
                     # We also need to add the new_pos, as it might fall again.
-                    dormant_rows[new_pos[1]].add(new_pos[0])
+                    self.active_rows[new_pos[1]].add(new_pos[0])
 
+        #end_time = time.monotonic()
 
-        self.active_rows = dormant_rows
-
-        end_time = time.monotonic()
-
-        print("Sand Physics Time", end_time - start_time)
-        if end_time - start_time >= constants.TICK_RATE:
-            print(" --------------------------- Too slow --------------------")
+        #print("Sand Physics Time", end_time - start_time)
+        #if end_time - start_time >= constants.TICK_RATE:
+        #    print(" --------------------------- Too slow --------------------")
 
     def find_and_clear_lines(self):
         """
@@ -244,7 +258,4 @@ class SandPile:
         Returns the number of cleared sand pixels.
         """
         pass
-
-    def update(self):
-        self.apply_sand_physics()
 
