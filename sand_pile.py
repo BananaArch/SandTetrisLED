@@ -31,9 +31,9 @@ class SandPile:
         """
 
         self.sand_state_bitmap = sand_bitmap
-        self.dirty_rects = []
-        # Each rectangle will be a tuple with (x, y, width, height).
-        # The x and y represents the coordinate of the top-left of the rectangle.
+        # A set to hold the (x, y) coordinates of every active sand pixel.
+        # These pixels is used by the sand physics method.
+        self.active_pixels = set()
 
     def _coord_within_bounds(self, coord: Tuple[int, int]):
         x, y = coord
@@ -58,142 +58,6 @@ class SandPile:
         # Returns if pixel position is 0, which is our transparent index
         return self.sand_state_bitmap[x, y] == 0
 
-    def _rects_overlap(self, rect1 : Tuple[int, int, int, int], rect2 : Tuple[int, int, int, int]):
-        x1, y1, w1, h1 = rect1
-        x2, y2, w2, h2 = rect2
-
-        # Check if rect2 is to the right or left of rect1
-        if (x1 + w1 < x2 or x2 + w2 < x1):
-            return False
-
-        # Check if rect2 is above or below rect1
-        if (y1 + h1 < y2 or y2 + h2 < y1):
-            return False
-
-        # Otherwise, they do overlap
-        return True
-
-    def _get_rects_union(self, rect1 : Tuple[int, int, int, int], rect2 : Tuple[int, int, int, int]):
-        x1, y1, w1, h1 = rect1
-        x2, y2, w2, h2 = rect2
-
-        # Get the top-left coordinates for the union rectangle
-        union_x = min(x1, x2)
-        union_y = min(y1, y2)
-
-        # Get the bottom-right coordinates for the union rectangle
-        union_right_x = max(x1 + w1, x2 + w2)
-        union_bot_y = max(y1 + h1, y2 + h2)
-
-        union_width = union_right_x - union_x
-        union_height = union_bot_y - union_y
-
-        return (union_x, union_y, union_width, union_height)
-
-    def _merge_overlapping_rects(self):
-
-        start_time = time.monotonic()
-
-        if not self.dirty_rects:
-            return
-
-        merged_rects = self.dirty_rects.copy()
-
-        while True:
-            merge_happened = False
-
-            i = 0
-            while i < len(merged_rects):
-
-                j = i + 1
-                while j < len(merged_rects):
-
-                    rect1 = merged_rects[i]
-                    rect2 = merged_rects[j]
-
-                    if not self._rects_overlap(rect1, rect2):
-                        j += 1  # We increment j to check for the next rect if they don't overlap.
-                        continue  # We don't have to worry about merging.
-
-                    union_rect = self._get_rects_union(rect1, rect2)
-                    union_area = union_rect[2] * union_rect[3]  # this is width * height
-
-                    sum_of_original_areas = (rect1[2] * rect1[3]) + (rect2[2]*rect2[3])
-
-                    # Only merge if the new area is not excessively larger than the sum of the old ones.
-                    if (union_area < sum_of_original_areas * constants.MERGE_HEURISTIC_FACTOR):
-                        merged_rects[i] = union_rect
-                        del merged_rects[j]
-
-                        merge_happened = True
-                        break
-
-                    # otherwise, we will continue to iterate
-
-                    j += 1
-
-                if merge_happened:
-                    break
-
-                i += 1
-
-            if not merge_happened:
-                break
-
-        self.dirty_rects = merged_rects
-
-        end_time = time.monotonic()
-
-        print("Merge Time", end_time - start_time)
-        if (end_time - start_time >= 0.01):
-            print("%%%%%%%%%%%%%% - SLOW MERGE - %%%%%%%%%%%%%%%")
-
-    def _merge_overlapping_rects_fast(self):
-        """
-        A fast, O(n) algorithm that finds the single bounding box that contains
-        all rectangles in the dirty_rects list. This replaces a complex merge
-        with a simple union, which is much more performant.
-        """
-
-        # If there are no rectangles to process, do nothing.
-        if not self.dirty_rects:
-            return
-
-        # Start by setting the min and max coordinates to the boundaries
-        # of the first rectangle in the list.
-        first_rect = self.dirty_rects[0]
-        min_x, min_y, first_width, first_height = first_rect
-        max_x = min_x + first_width
-        max_y = min_y + first_height
-
-        # Loop from the second rectangle onwards.
-        for i in range(1, len(self.dirty_rects)):
-            rect = self.dirty_rects[i]
-            x, y, width, height = rect
-
-            # Update  the min values by comparing with the current rect's top-left corner.
-            min_x = min(min_x, x)
-            min_y = min(min_y, y)
-
-            # Update the max values by comparing with the current rect's bottom-right corner.
-            max_x = max(max_x, x + width)
-            max_y = max(max_y, y + height)
-
-        # Calculate the width and height of the final bounding box.
-        merged_width = max_x - min_x
-        merged_height = max_y - min_y
-
-        final_merged_rect = (min_x, min_y, merged_width, merged_height)
-
-        # Clear the old list and replace it with the single, new, all-encompassing rectangle.
-        self.dirty_rects.clear()
-        self.dirty_rects.append(final_merged_rect)
-
-    # TODO: Write a fast merge method
-
-    def dirty_the_area(self, x: int, y: int, width: int, height: int):
-        self.dirty_rects.append((x, y, width, height))
-
     def _swap(self, coord1: Tuple[int, int], coord2: Tuple[int, int]):
         first_x, first_y = coord1
         second_x, second_y = coord2
@@ -209,6 +73,7 @@ class SandPile:
         """
         Converts the given Tetromino to sand. This method has access to sprite_sheet_bitmap (a view) because it's a
         pragmatic decision based on the fact that our main 2D array is a bitmap (view).
+        It also "activates" each of the pixel (adds it to the active_pixels list).
 
         Args:
             tetromino (Tetromino): The tetromino object to convert to sand.
@@ -259,14 +124,14 @@ class SandPile:
                     # the INFO_BAR_HEIGHT accounts for the fact that the playfield area is 5 px below y=0
 
                     # Safety check to ensure we don't write out of bounds
-                    if (0 <= dest_x < self.sand_state_bitmap.width and
-                        0 <= dest_y < self.sand_state_bitmap.height):
+                    if (self._coord_within_bounds((dest_x, dest_y))):
 
                         # Copy the pixel's index value from the sprite sheet
                         # to the sand pile's state bitmap.
                         pixel_value = sprite_sheet_bitmap[source_x, source_y]
 
                         self.sand_state_bitmap[dest_x, dest_y] = pixel_value
+                        self.active_pixels.add((dest_x, dest_y))
 
     def apply_sand_physics(self):
         """
@@ -276,7 +141,7 @@ class SandPile:
         it's really slow. We will have to optimize this later.
         """
 
-        if (len(self.dirty_rects) == 0):
+        if not self.active_pixels:
             return
 
         start_time = time.monotonic()
@@ -284,80 +149,81 @@ class SandPile:
         grid = self.sand_state_bitmap
         grid_width = constants.GAME_WIDTH
         grid_height = constants.PLAYFIELD_HEIGHT
-        next_dirty_rects = []
 
-        # If the dirty_rects list is small enough.
-        # It's worth it to run the merge optimization.
-        # We will process this merged rectangles
-        if len(self.dirty_rects) <= constants.MERGE_THRESHOLD:
-            self._merge_overlapping_rects()
-        else:
-            # If not, we run the fast algorithm
-            # which is faster but less accurate
-            self._merge_overlapping_rects_fast()
+        next_active_pixels = set()
 
-        rects_to_process = self.dirty_rects
+        sorted_active_pixels = list(self.active_pixels)
+        sorted_active_pixels.sort(key=lambda coord: coord[1], reverse = True)
 
-        for rect in rects_to_process:
+        pixels_to_process = sorted_active_pixels[:constants.MAX_PIXELS_TO_PROCESS_PER_FRAME]
 
-            rect_x, rect_y, width, height = rect
+        for pixel in pixels_to_process:
 
-            # start from BOTTOM of screen to TOP of screen
-            start_y = min(grid_height - 2, rect_y + height - 1)
-            end_y = max(0, rect_y - 1)
-            y_range = range(start_y, end_y, -1)
+            x, y = pixel
 
-            start_x = max(0, rect_x)
-            end_x = min(rect_x + width, grid_width)
+            # Check for bounds. We do not use self._coord_within_bounds() for performance.
+            # We also make sure it excludes the bottom row. We need to do this, because
+            # the code checks and manipulates the row below the current y value.
 
-            # Loop from the bottom-up
-            for y in y_range:
+            if (not (0 <= x < grid_width and 0 <= y < grid_height)):
+                continue
 
-                x_range = range(start_x, end_x)
-                # Alternate x scanning direction for more random patterns
-                if (random.getrandbits(1)):
-                    x_range = reversed(x_range)
+            # Check if there is no sand at that pixel, if so, we skip this pixel.
+            if (grid[x, y] == 0):
+                continue
 
-                for x in x_range:
+            # --- PHYSICS LOGIC ---
 
-                    # Check if within boundaries
-                    if (not (0 <= x < grid_width and 0 <= y < grid_height)):
-                        continue
+            moved = False  # Whether or not the pixel moves
+            new_pos = None  # The new position that the pixel moves to (if it moves)
 
-                    # If the current pixel is empty, we do not need to do sand physics
-                    if grid[x, y] == 0:
-                        continue
+            # STEP 1) CHECK IF THE PIXEL CAN GO DOWN
 
-                    # --- Sand Physics Logic ---
+            if y + 1 < grid_height and grid[x, y + 1] == 0:
+                new_pos = (x, y + 1)
+                moved = True
 
-                    # 1) Check if the pixel directly below is empty.
-                    # If so, we move it down.
-                    # We also dirty the surrounding area.
-                    if y + 1 < grid_height and grid[x, y + 1] == 0:
-                        grid[x, y + 1] = grid[x, y]
-                        grid[x, y] = 0
-                        next_dirty_rects.append((x, y - 1, 1, 3))
-                        continue
+            # STEP 2) IF THAT DOESN'T WORK, CHECK IF THE PIXEL CAN GO DIAGONALLY
+            #         DOWN TO ENSURE RANDOMNESS, IT WILL RANDOMLY CHOOSE
+            #         DIRECTION (LEFT OR RIGHT) IT WILL TRY TO GO DOWN FIRST.
 
-                    # 2) If straight down is blocked, check the two diagonals
-                    # Randomly choose a direction: 1 for right, -1 for left
-                    # This makes it more natural and randomized
+            else:
+                direction = 1 if random.getrandbits(1) else -1
 
-                    direction = 1 if random.getrandbits(1) else -1
+                # CHECK THE BOUNDARIES OF THE DIAGONAL IN THE RANDOM DIRECTION. ALSO CHECK IF DIAGONAL IS EMPTY.
+                if (0 <= (x + direction) < grid_width and 0 <= y + 1 < grid_height) and (grid[x + direction, y + 1] == 0):
+                    # IF IT IS, THEY SWAP
+                    new_pos = (x + direction, y + 1)
+                    moved = True
 
-                    # Check the boundaries of the first diagonal in the chosen direction
-                    if 0 <= (x + direction) < grid_width and y + 1 < grid_height and grid[x + direction, y + 1] == 0:
-                        grid[x + direction, y + 1] = grid[x, y]
-                        grid[x, y] = 0
-                        next_dirty_rects.append((x - 1, y - 1, 3, 3))
+                # IF THE FIRST DIAGONAL FAILS, CHECK THE OTHER DIAGONAL.
+                elif (0 <= (x - direction) < grid_width and 0 <= y + 1 < grid_height) and (grid[x - direction, y + 1] == 0):
+                    new_pos = (x - direction, y + 1)
+                    moved = True
 
-                    # If the first direction failed, check the other diagonal
-                    elif 0 <= (x - direction) < grid_width and y + 1 < grid_height and grid[x - direction, y + 1] == 0:
-                        grid[x - direction, y + 1] = grid[x, y]
-                        grid[x, y] = 0
-                        next_dirty_rects.append((x - 1, y - 1, 3, 3))
+            # UPDATE THE GRID AND WAKE UP NEIGHBORS
+            if moved:
 
-        self.dirty_rects = next_dirty_rects
+                # Actually move the pixel
+                grid[new_pos[0], new_pos[1]] = grid[x, y]
+                grid[x, y] = 0
+
+                # The pixel moved, leaving a hole. The pixels above it might now be unstable.
+                # We must add them to the active set for the next frame so they get checked.
+                next_active_pixels.add((x, y - 1))     # Above
+                next_active_pixels.add((x - 1, y - 1)) # Above-left
+                next_active_pixels.add((x + 1, y - 1)) # Above-right
+
+                # We also need to add the new_pos, as it might fall again.
+                next_active_pixels.add(new_pos)
+
+        # Remove the pixels we just processed from the main set.
+        processed_pixels = set(pixels_to_process)
+        self.active_pixels.difference_update(processed_pixels)
+
+        # Add in newly-activated pixels
+
+        self.active_pixels.update(next_active_pixels)
 
         end_time = time.monotonic()
 

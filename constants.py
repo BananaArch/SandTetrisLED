@@ -24,13 +24,9 @@ TAP_COOLDOWN = 0.1  # the time in seconds before another tap (rotate) can occur
 
 # --- Sand Physics ---
 
-# Only merge if the new area of dirty rectangle is less than 2x the old areas.
-MERGE_HEURISTIC_FACTOR = 2
-
-# If dirty_rects has less than this number of rectangles it will try to merge
-# If not, then we will just iterate over the entire grid.
-MERGE_THRESHOLD = 30
-
+# Maximum amount of pixels to process during a frame.
+# This speeds up the program.
+MAX_PIXELS_TO_PROCESS_PER_FRAME = 100
 
 # --- Tetromino Physics ---
 INITIAL_FALL_RATE = 0.05  # the seconds it takes for the tetromino to fall 1 px. Default: 0.15

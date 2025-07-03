@@ -177,36 +177,6 @@ class Game:
                 self.active_tetromino.set_orientation(original_orientation)
                 self.active_tetromino.x = original_x
 
-    def _dirty_the_tetromino(self):
-        # iterate through 4x4 grid of minos
-
-        shape_data = self.active_tetromino.get_shape_data()
-        tetromino_x = self.active_tetromino.x
-        tetromino_y = self.active_tetromino.y
-
-        for index, mino_value in enumerate(shape_data):
-
-            if mino_value == 0:  # there is no mino there
-                continue  # we skip it
-
-            shape_x = index % constants.TETROMINO_SHAPE_DATA_SIZE  # gets the 2D x coordinate of the 1D shape_data
-            shape_y = index // constants.TETROMINO_SHAPE_DATA_SIZE  # gets the 2D y coordinate of the 1D shape_data
-
-            self.sand_pile.dirty_the_area(tetromino_x + shape_x * 3, tetromino_y + shape_y * 3 - 5, 3, 3)
-
-            # if there is a mino there, iterate through all pixels of that mino
-            #for x_offset in range(constants.MINO_SIZE):
-            #    for y_offset in range(constants.MINO_SIZE):
-
-            #        absolute_pixel_x = proposed_x + shape_x * constants.MINO_SIZE + x_offset
-            #        absolute_pixel_y = proposed_y + shape_y * constants.MINO_SIZE + y_offset
-
-            #        sand_bitmap_x = absolute_pixel_x
-            #        sand_bitmap_y = absolute_pixel_y - constants.INFO_BAR_HEIGHT
-
-            #        if (not self.sand_pile.is_empty_at((sand_bitmap_x, sand_bitmap_y))):
-            #            return True
-
     def _update_all_models(self, dt: float, inputs):
 
         # --- Tetromino Updates ---
@@ -231,8 +201,6 @@ class Game:
                 self.is_game_over = True
 
             self.sand_pile.convert_tetromino_to_sand(self.active_tetromino, self.graphics_manager.sprite_sheet_bitmap)
-
-            self._dirty_the_tetromino()
 
             if (self.num_tetrominoes_dropped != 0 and self.num_tetrominoes_dropped % constants.TETROMINO_FALLEN_NEXT_LEVEL == 0):
                 self.active_tetromino.decrement_fall_rate()
