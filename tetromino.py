@@ -80,6 +80,27 @@ class Tetromino:
 
         return array_width * constants.MINO_SIZE
 
+    def get_top_padding(self):
+        shape_data = self.get_shape_data()
+        array_width = constants.TETROMINO_SHAPE_DATA_SIZE
+        array_height = constants.TETROMINO_SHAPE_DATA_SIZE
+
+        for row in range(array_height):
+
+            row_occupied = False
+
+            for col in range(array_width):
+
+                index = row * array_width + col
+
+                if shape_data[index] != 0:
+                    row_occupied = True
+                    break
+
+            if row_occupied:
+                return row * constants.MINO_SIZE
+
+        return array_height * constants.MINO_SIZE
 
     def get_bottom_padding(self):
 

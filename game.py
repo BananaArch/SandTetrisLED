@@ -63,12 +63,11 @@ class Game:
 
 
     def _get_random_shape(self):
-        return random.choice(constants.SHAPE_TYPE_POPULATION)
+        #return random.choice(constants.SHAPE_TYPE_POPULATION)
+        return constants.ShapeType.T
 
     def _get_random_color(self):
         return random.choice(constants.COLOR_TYPE_POPULATION_WEIGHTED)
-
-
 
     def _is_tetromino_collision(self, proposed_x: int, proposed_y: int):
         """
@@ -193,8 +192,13 @@ class Game:
         colliding = self._is_tetromino_collision(new_x, new_y)
         hits_wall = self._tetromino_hits_wall(new_x)
 
+        # --- Logic to Deal when Tetromino Collides ---
 
         if colliding:
+
+            # --- If it cannot be placed below the INFO_BAR_HEIGHT, then it's GAME OVER ---
+            if self.active_tetromino.y - self.active_tetromino.get_top_padding() < constants.INFO_BAR_HEIGHT:
+                self.is_game_over = True
 
             self.sand_pile.convert_tetromino_to_sand(self.active_tetromino, self.graphics_manager.sprite_sheet_bitmap)
 
@@ -243,6 +247,7 @@ class Game:
 
     def start_game_loop(self):
         while not self.is_game_over:
+
             start_frame_time = time.monotonic()
             dt = start_frame_time - self.last_frame_time
             self.last_frame_time = start_frame_time
@@ -259,6 +264,8 @@ class Game:
             if sleep_time > 0:
                 time.sleep(sleep_time)
 
-            print(sleep_time)
+            #print(sleep_time)
         while True:
+            print("GAME OVER")
+            time.sleep(60)
             pass

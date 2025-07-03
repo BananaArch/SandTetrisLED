@@ -2,6 +2,7 @@
 
 import displayio
 import random
+import time
 
 from tetromino import Tetromino
 import constants
@@ -91,6 +92,8 @@ class SandPile:
 
     def _merge_overlapping_rects(self):
 
+        # start_time = time.monotonic()
+
         if (len(self.dirty_rects) == 0):
             return
 
@@ -113,11 +116,21 @@ class SandPile:
                         continue  # We don't have to worry about merging.
 
                     union_rect = self._get_rects_union(rect1, rect2)
-                    merged_rects[i] = union_rect
-                    del merged_rects[j]
+                    union_area = union_rect[2] * union_rect[3]  # this is width * height
 
-                    merge_happened = True
-                    break
+                    sum_of_original_areas = (rect1[2] * rect1[3]) + (rect2[2]*rect2[3])
+
+                    # Only merge if the new area is not excessively larger than the sum of the old ones.
+                    if (union_area < sum_of_original_areas * constants.MERGE_HEURISTIC_FACTOR):
+                        merged_rects[i] = union_rect
+                        del merged_rects[j]
+
+                        merge_happened = True
+                        break
+
+                    # otherwise, we will continue to iterate
+
+                    j += 1
 
                 if merge_happened:
                     break
@@ -128,7 +141,10 @@ class SandPile:
                 break
 
         self.dirty_rects = merged_rects
-        print(merged_rects)
+
+        # end_time = time.monotonic()
+
+        # print("Merge Time", end_time - start_time)
 
     def dirty_the_area(self, x: int, y: int, width: int, height: int):
         self.dirty_rects.append((x, y, width, height))
@@ -218,6 +234,8 @@ class SandPile:
         if (len(self.dirty_rects) == 0):
             return
 
+        start_time = time.monotonic()
+
         next_dirty_rects = []
 
         self._merge_overlapping_rects()
@@ -249,8 +267,6 @@ class SandPile:
                     if grid[x, y] == 0:
                         continue
 
-                    # print("Checks sand logic")
-
                     # --- Sand Physics Logic ---
 
                     # 1) Check if the pixel directly below is empty.
@@ -281,6 +297,12 @@ class SandPile:
                         next_dirty_rects.append((x - 1, y - 1, 3, 3))
 
         self.dirty_rects = next_dirty_rects
+
+        end_time = time.monotonic()
+
+        print("Sand Physics Time", end_time - start_time)
+        if end_time - start_time >= constants.TICK_RATE:
+            print("Too slow")
 
     def find_and_clear_lines(self):
         """
