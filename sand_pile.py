@@ -143,8 +143,9 @@ class SandPile:
         """
         Iterates through the SandPile and makes any unsupported sand pixels fall down.
         This version is optimized for performance and more natural-looking physics.
-        This method currently takes the majority (80%) of the runtime of each tick, and
-        it's really slow. We will have to optimize this later.
+        This method sometimes takes the majority (80%) of the runtime of each tick.
+        It is not perfect and there is an peeling issue with a "race condition"
+        due to the nature of the cellular automata simulation.
         """
 
         has_any_active_pixels = any(self.active_rows)
@@ -157,6 +158,9 @@ class SandPile:
         grid = self.sand_state_bitmap
         grid_width = constants.GAME_WIDTH
         grid_height = constants.PLAYFIELD_HEIGHT
+
+        # Stores active pixels for next simulation
+        next_active_rows = [set() for _ in range(grid_height)]
 
         for y in range(grid_height - 1, -1, -1):
 
@@ -211,15 +215,17 @@ class SandPile:
 
                     # The pixel moved, leaving a hole. The pixels above it might now be unstable.
                     # We must add them to the active set for the next frame so they get checked.
-                    self._activate_pixel((x, y - 1))     # Above
-                    self._activate_pixel((x - 1, y - 1)) # Above-left
-                    self._activate_pixel((x + 1, y - 1)) # Above-right
+
+                    if y - 1 >= 0:
+                        next_active_rows[y-1].add(x)  # Above
+                        if x - 1 >= 0: next_active_rows[y-1].add(x-1)  # Above-Left
+                        if x + 1 < grid_width: next_active_rows[y-1].add(x+1)  # Above-Right
 
                     # We also need to add the new_pos, as it might fall again.
-                    self._activate_pixel(new_pos)
+                    next_active_rows[new_pos[1]].add(new_pos[0])
 
 
-            self.active_rows[y].clear()
+        self.active_rows = next_active_rows
 
         end_time = time.monotonic()
 
